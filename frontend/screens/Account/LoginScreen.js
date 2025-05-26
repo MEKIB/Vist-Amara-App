@@ -21,7 +21,7 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUser }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const BASE_URL = Platform.OS === 'android' && !Platform.isEmulator ? 'http://192.168.232.208:2000' : 'http://localhost:2000';
+  const BASE_URL = Platform.OS === 'android' && !Platform.isEmulator ? 'http://192.168.213.208:2000' : 'http://localhost:2000';
   
   console.log('BASE_URL:', BASE_URL);
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HotelDetails from './HotelDetails';
@@ -33,22 +33,21 @@ function HotelsLodges({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {/* <HotelDetails
+      <View>
+        <HotelDetails
           hotel={hotelWithData}
           hotelAdminId={hotelWithData.HotelAdminId}
           navigation={navigation}
         />
         <Facilities hotelId={hotelWithData.id} hotelAdminId={hotelWithData.HotelAdminId} />
         <HouseRules hotelId={hotelWithData.id} hotelAdminId={hotelWithData.HotelAdminId} />
-         */}
         
         <Availability
           hotelId={hotelWithData.id}
           hotelAdminId={hotelWithData.HotelAdminId}
           navigation={navigation} // Pass navigation prop
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
