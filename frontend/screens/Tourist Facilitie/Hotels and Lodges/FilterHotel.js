@@ -27,6 +27,7 @@ const BASE_URL =
     ? 'http://192.168.232.208:2000'
     : 'http://localhost:2000';
 
+    
 const FilterHotel = ({ navigation }) => {
   const locations = [ALL_LOCATIONS, 'Bahir Dar', 'Gondar', 'Lalibela', 'Axum', 'Debre Markos'];
   const facilityTypes = [ALL_FACILITY_TYPES, 'Hotels', 'Lodges', 'Resorts', 'Guest Houses', 'Restaurants'];

@@ -164,7 +164,7 @@ const Availability = ({ hotelId, navigation }) => {
         childrenAges,
       };
       console.log('Submitting booking:', booking);
-      await axios.post(`${BASE_URL}/api/bookings`, booking);
+      await axios.post(`${BASE_URL}/api/reservations`, reservation);
       Alert.alert('Success', `Booking confirmed for ${selectedRooms.length} ${selectedRoomType} room(s).`);
       setSelectedRooms([]);
       setShowBookingForm(false);

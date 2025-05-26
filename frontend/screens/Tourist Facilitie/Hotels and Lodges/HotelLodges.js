@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HotelDetails from './HotelDetails';
-import Facilities from './Facility'; // Note: Renamed to Facilities to match import
+import Facilities from './Facility';
 import Availability from './Availability';
 import HouseRules from './HotelRules';
 
@@ -34,21 +34,24 @@ function HotelsLodges({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        <HotelDetails
+        {/* <HotelDetails
           hotel={hotelWithData}
           hotelAdminId={hotelWithData.HotelAdminId}
           navigation={navigation}
         />
-        <Facilities hotelId={hotelWithData.id} hotelAdminId={hotelWithData.HotelAdminId} /> 
+        <Facilities hotelId={hotelWithData.id} hotelAdminId={hotelWithData.HotelAdminId} />
         <HouseRules hotelId={hotelWithData.id} hotelAdminId={hotelWithData.HotelAdminId} />
-         <Availability hotelId={hotelWithData.id} hotelAdminId={hotelWithData.HotelAdminId} />
+         */}
         
-        
+        <Availability
+          hotelId={hotelWithData.id}
+          hotelAdminId={hotelWithData.HotelAdminId}
+          navigation={navigation} // Pass navigation prop
+        />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
