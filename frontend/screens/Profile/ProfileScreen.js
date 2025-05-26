@@ -43,13 +43,15 @@ const ProfileScreen = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
         <Image 
-          source={isLoggedIn && user?.profileImage ? user.profileImage : defaultProfileImage} 
+          source={isLoggedIn && user?.
+passportOrId ? user.
+passportOrId : defaultProfileImage} 
           style={styles.profileImage} 
         />
         
         {isLoggedIn ? (
           <>
-            <Text style={styles.profileName}>{user?.name}</Text>
+            <Text style={styles.profileName}>{user?.firstName}</Text>
             <Text style={styles.profileEmail}>{user?.email}</Text>
           </>
         ) : (

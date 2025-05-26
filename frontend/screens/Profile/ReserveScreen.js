@@ -16,7 +16,7 @@ import { Divider } from 'react-native-elements';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { useNavigation } from '@react-navigation/native';
-import PaymentModal from './PaymentModal'; // Assume this is the provided PaymentModal
+import PaymentModal from './paymentModal'; // Assume this is the provided PaymentModal
 
 const defaultHotelImage = require('../../assets/icon.png');
 
@@ -36,7 +36,7 @@ const ReserveScreen = () => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
-  const BASE_URL = Platform.OS === 'android' && !Platform.isEmulator ? 'http://192.168.213.208:2000' : 'http://localhost:2000';
+  const BASE_URL = Platform.OS === 'android' && !Platform.isEmulator ? 'http:/192.168.213.185:2000' : 'http://localhost:2000';
 
   // Fetch user data from SecureStore
   const fetchUserData = async () => {
@@ -306,10 +306,10 @@ const ReserveScreen = () => {
             <Text style={styles.detailText}>{item.roomType}</Text>
           </View>
           
-            <View style={styles.detailRow}>
-              <MaterialCommunityIcons name="door" size={styles.detailText}> color="#00ADB5" />
-              <Text style={styles.detailText}>Rooms: {item.roomNumbers.join(', ')}</Text>
-            </View>
+           <View style={styles.detailRow}>
+  <MaterialCommunityIcons name="door" size={24} color="#00ADB5" />
+  <Text style={styles.detailText}>Rooms: {item.roomNumbers.join(', ')}</Text>
+</View>
             
               <View style={styles.detailRow}>
                 <MaterialCommunityIcons name="weather-night" size={24} color="#00ADB5" />
