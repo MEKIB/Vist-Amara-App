@@ -1,30 +1,14 @@
 import React from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as SecureStore from 'expo-secure-store';
 
 const defaultProfileImage = require('../../assets/logo/logo.png');
 
 const ProfileScreen = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser }) => {
-  const handleLogout = async () => {
-    try {
-      // Remove token and user data from SecureStore
-      await SecureStore.deleteItemAsync('jwtToken');
-      await SecureStore.deleteItemAsync('user');
-      console.log('SecureStore data cleared successfully');
-    } catch (error) {
-      console.error('Error clearing SecureStore:', error);
-    }
-
-    // Clear local state
+  const handleLogout = () => {
     setIsLoggedIn(false);
     setUser(null);
-
-    // Navigate to Login screen
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+    navigation.navigate('Home');
   };
 
   const menuItems = isLoggedIn ? [
