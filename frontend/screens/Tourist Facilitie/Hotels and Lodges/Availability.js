@@ -18,7 +18,7 @@ import * as SecureStore from 'expo-secure-store';
 
 const BASE_URL =
   Platform.OS === 'android' && !Platform.isEmulator
-    ? 'http://192.168.213.208:2000'
+    ? 'http:///192.168.213.185:2000'
     : 'http://localhost:2000';
 const colors = {
   dark: '#222831',

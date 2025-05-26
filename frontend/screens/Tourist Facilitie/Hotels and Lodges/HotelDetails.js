@@ -24,7 +24,7 @@ import axios from 'axios';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BASE_URL =
   Platform.OS === 'android' && !Platform.isEmulator
-    ? 'http://192.168.213.208:2000'
+    ? 'http:///192.168.213.185:2000'
     : 'http://localhost:2000';
 
 // Create Axios instance with interceptors

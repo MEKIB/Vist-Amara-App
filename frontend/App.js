@@ -25,6 +25,7 @@ import BookingScreen from './screens/Profile/BookingScreen';
 import ReserveScreen from './screens/Profile/ReserveScreen';
 import Footer from './screens/Footer/Footer';
 import ChatbotLogic from './screens/Chatbot/ChatbotLogic';
+import AskRefundScreen from './screens/Profile/AskRefundScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -140,6 +141,18 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
+        <Stack.Screen name="AskRefund" options={{ title: 'My Booking' }}>
+        {(props) => (
+          <ScreenWrapper
+            Component={AskRefundScreen}
+            {...props}
+            user={user}
+            setUser={setUser}
+            useScrollView={true}
+          />
+        )}
+      </Stack.Screen>
+      
       <Stack.Screen name="ReserveScreen" options={{ title: 'Reservation' }}>
         {(props) => (
           <ScreenWrapper

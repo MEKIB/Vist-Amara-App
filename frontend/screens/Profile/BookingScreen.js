@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,19 +7,43 @@ import {
   TouchableOpacity,
   Image,
   Modal,
-  Alert,
+  TextInput,
   FlatList,
-  SectionList,
   Dimensions,
-  Platform
+  Platform,
 } from 'react-native';
-import { MaterialCommunityIcons, MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { Badge, Divider } from 'react-native-elements';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 const { width } = Dimensions.get('window');
 
 const defaultHotelImage = require('../../assets/icon.png');
+
+const determineBookingStatus = (booking) => {
+  const now = new Date();
+  const checkIn = new Date(booking.checkIn);
+  const checkOut = new Date(booking.checkOut);
+  
+  if (booking.status === 'cancelled') {
+    return 'cancelled';
+  }
+  
+  if (checkOut > now && (booking.status === 'confirmed' || booking.status === 'check-in')) {
+    return 'upcoming';
+  }
+  
+  if (checkOut <= now && (booking.status === 'checked-out' || booking.status === 'checked-in')) {
+    return 'completed';
+  }
+  
+  if (checkIn <= now && checkOut > now) {
+    return 'ongoing';
+  }
+  
+  return booking.status;
+};
 
 const BookingScreen = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -28,96 +52,219 @@ const BookingScreen = () => {
   const [notification, setNotification] = useState({
     visible: false,
     message: '',
-    type: 'success'
+    type: 'success',
   });
   const [timeRange, setTimeRange] = useState('month');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [datePickerMode, setDatePickerMode] = useState('date');
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [refundBookingCode, setRefundBookingCode] = useState('');
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refunds, setRefunds] = useState([]);
+  const [refundTab, setRefundTab] = useState(0);
 
-  // Sample booking data
-  const bookings = [
-    {
-      id: 1,
-      hotelName: "Grand Plaza Hotel",
-      roomType: "Deluxe Suite",
-      checkIn: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-      checkOut: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-      roomNumber: "305",
-      guests: 2,
-      totalPrice: 1200,
-      status: "completed",
-      rating: 4.5,
-      image: "https://source.unsplash.com/random/300x200/?hotel"
-    },
-    {
-      id: 2,
-      hotelName: "Mountain View Resort",
-      roomType: "Premium Room",
-      checkIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      checkOut: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
-      roomNumber: "412",
-      guests: 2,
-      totalPrice: 950,
-      status: "upcoming",
-      image: "https://source.unsplash.com/random/300x200/?resort"
-    },
-    {
-      id: 3,
-      hotelName: "Beachside Villa",
-      roomType: "Ocean View Suite",
-      checkIn: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-      checkOut: new Date(Date.now() - 55 * 24 * 60 * 60 * 1000),
-      roomNumber: "208",
-      guests: 4,
-      totalPrice: 1800,
-      status: "completed",
-      rating: 5,
-      image: "https://source.unsplash.com/random/300x200/?beach,villa"
-    },
-    {
-      id: 4,
-      hotelName: "City Central Hotel",
-      roomType: "Executive Room",
-      checkIn: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-      checkOut: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000),
-      roomNumber: "710",
-      guests: 1,
-      totalPrice: 750,
-      status: "upcoming",
-      image: "https://source.unsplash.com/random/300x200/?city,hotel"
-    },
-    {
-      id: 5,
-      hotelName: "Lakeside Retreat",
-      roomType: "Luxury Villa",
-      checkIn: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      checkOut: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      roomNumber: "102",
-      guests: 2,
-      totalPrice: 1500,
-      status: "completed",
-      rating: 4.8,
-      image: "https://source.unsplash.com/random/300x200/?lake,villa"
+  const BACKEND_API_URL =
+    Platform.OS === 'android' && !Platform.isEmulator
+      ? 'http://192.168.213.185:2000'
+      : 'http://localhost:2000';
+
+  const fetchUserData = async () => {
+    try {
+      const storedToken = await SecureStore.getItemAsync('jwtToken');
+      const storedUser = await SecureStore.getItemAsync('user');
+      if (storedToken && storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser.user || parsedUser);
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+        setError('Please log in to view your bookings.');
+      }
+      setAuthChecked(true);
+    } catch (e) {
+      console.error('Error fetching user data:', e);
+      setError('Failed to load user data. Please log in again.');
+      showNotification('Failed to load user data. Please log in again.', 'error');
     }
-  ];
+  };
 
-  const filteredBookings = bookings.filter(booking => {
-    if (activeTab === 0) return true; // All
-    if (activeTab === 1) return booking.status === 'upcoming';
-    if (activeTab === 2) return booking.status === 'completed';
-    if (activeTab === 3) return booking.status === 'cancelled';
-    return true;
-  });
+  const fetchBookings = async () => {
+    if (!authChecked || !isLoggedIn) {
+      setLoading(false);
+      return;
+    }
 
-  const handleCancelBooking = (booking) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${BACKEND_API_URL}/api/bookingHistory/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const fetchedBookings = response.data.data || [];
+      const validBookings = fetchedBookings
+        .filter((booking) => {
+          const isValid = booking.bookingCode && typeof booking.bookingCode === 'string';
+          if (!isValid) {
+            console.warn('Invalid booking filtered out:', booking);
+          }
+          return isValid;
+        })
+        .map((booking) => ({
+          ...booking,
+          id: booking._id || booking.bookingCode,
+          checkIn: new Date(booking.checkIn || booking.checkInDate || Date.now()),
+          checkOut: new Date(booking.checkOut || booking.checkOutDate || Date.now()),
+          createdAt: new Date(booking.createdAt || Date.now()),
+          status: determineBookingStatus(booking),
+        }));
+
+      setBookings(validBookings);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching booking history:', err);
+      setError(err.response?.data?.message || 'Failed to fetch booking history.');
+      showNotification(
+        err.response?.data?.message || 'Failed to fetch booking history.',
+        'error'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRefunds = async () => {
+    if (!isLoggedIn) return;
+
+    try {
+      const response = await axios.get(`${BACKEND_API_URL}/api/refunds/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setRefunds(
+        response.data.data.map((refund) => ({
+          ...refund,
+          createdAt: new Date(refund.createdAt || Date.now()),
+          updatedAt: new Date(refund.updatedAt || refund.createdAt || Date.now()),
+        })) || []
+      );
+    } catch (err) {
+      console.error('Error fetching refunds:', err);
+      showNotification(
+        err.response?.data?.message || 'Failed to fetch refunds',
+        'error'
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [authChecked, isLoggedIn, token]);
+
+  useEffect(() => {
+    if (activeTab === 4 && authChecked && isLoggedIn) {
+      fetchRefunds();
+    }
+  }, [activeTab, authChecked, isLoggedIn]);
+
+  const handleCancelBooking = async (booking) => {
+    if (!booking.bookingCode) {
+      showNotification('Invalid booking code.', 'error');
+      return;
+    }
     setSelectedBooking(booking);
     setShowCancelModal(true);
   };
 
-  const confirmCancel = () => {
-    setShowCancelModal(false);
-    showNotification(`Booking for ${selectedBooking.hotelName} has been cancelled`, 'success');
-    // In a real app, you would update the booking status via API here
+  const confirmCancel = async () => {
+    try {
+      const url = `${BACKEND_API_URL}/api/bookingHistory/${encodeURIComponent(
+        selectedBooking.bookingCode
+      )}/cancel`;
+      await axios.patch(
+        url,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.bookingCode === selectedBooking.bookingCode
+            ? { ...b, status: 'cancelled' }
+            : b
+        )
+      );
+      showNotification(
+        `Booking for ${selectedBooking.hotelName} has been cancelled`,
+        'success'
+      );
+    } catch (err) {
+      console.error('Error cancelling booking:', err);
+      showNotification(
+        err.response?.data?.message || 'Failed to cancel booking',
+        'error'
+      );
+    } finally {
+      setShowCancelModal(false);
+      setSelectedBooking(null);
+    }
+  };
+
+  const handleRefundSubmit = async () => {
+    if (!isLoggedIn) {
+      showNotification('Please log in to request a refund', 'error');
+      return;
+    }
+
+    if (!refundBookingCode || typeof refundBookingCode !== 'string') {
+      showNotification('Please enter a valid booking code', 'error');
+      return;
+    }
+
+    try {
+      setRefundLoading(true);
+      await axios.post(
+        `${BACKEND_API_URL}/api/askrefunds`,
+        {
+          userId: user.id,
+          bookingCode: refundBookingCode,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      showNotification('Refund request submitted successfully', 'success');
+      setRefundBookingCode('');
+      if (refundTab === 1) {
+        await fetchRefunds();
+      }
+    } catch (err) {
+      console.error('Error processing refund request:', err);
+      showNotification(
+        err.response?.data?.message || 'Failed to process refund request.',
+        'error'
+      );
+    } finally {
+      setRefundLoading(false);
+    }
   };
 
   const showNotification = (message, type) => {
@@ -127,9 +274,15 @@ const BookingScreen = () => {
     }, 3000);
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (booking) => {
+    const status = determineBookingStatus(booking);
     let backgroundColor, icon;
+
     switch (status) {
+      case 'cancelled':
+        backgroundColor = '#F44336';
+        icon = 'cancel';
+        break;
       case 'upcoming':
         backgroundColor = '#FFA500';
         icon = 'clock';
@@ -138,9 +291,9 @@ const BookingScreen = () => {
         backgroundColor = '#4CAF50';
         icon = 'check-circle';
         break;
-      case 'cancelled':
-        backgroundColor = '#F44336';
-        icon = 'cancel';
+      case 'ongoing':
+        backgroundColor = '#2196F3';
+        icon = 'hotel';
         break;
       default:
         backgroundColor = '#9E9E9E';
@@ -161,147 +314,299 @@ const BookingScreen = () => {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
   const calculateTotalSpending = () => {
     const now = new Date();
     let startDate;
-    
+
     switch (timeRange) {
       case 'week':
-        startDate = new Date(now.setDate(now.getDate() - 7));
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
         break;
       case 'month':
-        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
         break;
       case 'year':
-        startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+        startDate = new Date();
+        startDate.setFullYear(now.getFullYear() - 1);
         break;
       default:
-        startDate = new Date(0); // All time
+        startDate = new Date(0);
     }
 
     return bookings
-      .filter(booking => {
-        return booking.checkIn >= startDate && booking.status !== 'cancelled';
+      .filter((booking) => {
+        const status = determineBookingStatus(booking);
+        return booking.checkIn >= startDate && status !== 'cancelled';
       })
       .reduce((total, booking) => total + booking.totalPrice, 0);
   };
 
   const getTimeRangeLabel = () => {
     switch (timeRange) {
-      case 'week': return 'Last Week';
-      case 'month': return 'Last Month';
-      case 'year': return 'Last Year';
-      default: return 'All Time';
+      case 'week':
+        return 'Last Week';
+      case 'month':
+        return 'Last Month';
+      case 'year':
+        return 'Last Year';
+      default:
+        return 'All Time';
     }
   };
 
-  const renderBookingItem = ({ item }) => (
-    <View style={styles.bookingCard}>
-      <View style={styles.bookingHeader}>
-        <Image 
-          source={item.image ? { uri: item.image } : defaultHotelImage} 
-          style={styles.hotelImage} 
-        />
-        <View style={styles.hotelInfo}>
-          <Text style={styles.hotelName}>{item.hotelName}</Text>
-          <Text style={styles.roomType}>{item.roomType}</Text>
-          {getStatusBadge(item.status)}
-          {item.rating && (
-            <View style={styles.ratingContainer}>
-              <FontAwesome name="star" size={16} color="#FFD700" />
-              <Text style={styles.ratingText}>{item.rating}</Text>
+  const filteredBookings = bookings.filter((booking) => {
+    const status = determineBookingStatus(booking);
+    
+    if (activeTab === 0) return true;
+    if (activeTab === 1) return status === 'upcoming';
+    if (activeTab === 2) return status === 'completed';
+    if (activeTab === 3) return status === 'cancelled';
+    return true;
+  });
+
+  const sortedFilteredBookings = [...filteredBookings].sort((a, b) => 
+    new Date(b.createdAt) - new Date(a.createdAt)
+  );
+
+  const filteredRefunds = refunds
+    .filter((refund) => (refundTab === 0 ? refund.status === 'pending' : refund.status === 'refunded'))
+    .sort((a, b) => {
+      const dateA = new Date(refundTab === 0 ? a.createdAt : a.updatedAt);
+      const dateB = new Date(refundTab === 0 ? b.createdAt : b.updatedAt);
+      return refundTab === 0 ? dateA - dateB : dateB - dateA;
+    });
+
+  const renderBookingItem = ({ item }) => {
+    const status = determineBookingStatus(item);
+    const isUpcoming = status === 'upcoming';
+    const isCompleted = status === 'completed';
+    const isCancelled = status === 'cancelled';
+
+    return (
+      <View style={styles.bookingCard}>
+        <View style={styles.bookingHeader}>
+          <Image
+            source={item.image ? { uri: item.image } : defaultHotelImage}
+            style={styles.hotelImage}
+          />
+          <View style={styles.hotelInfo}>
+            <Text style={styles.hotelName}>{item.hotelName}</Text>
+            <Text style={styles.roomType}>{item.roomType}</Text>
+            {getStatusBadge(item)}
+            {item.rating && (
+              <View style={styles.ratingContainer}>
+                <FontAwesome name="star" size={16} color="#FFD700" />
+                <Text style={styles.ratingText}>{item.rating}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        <View style={styles.bookingDetails}>
+          <View style={styles.detailRow}>
+            <MaterialCommunityIcons name="door" size={20} color="#00ADB5" />
+            <Text style={styles.detailText}>Room {item.roomNumber}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <MaterialCommunityIcons name="account-group" size={20} color="#00ADB5" />
+            <Text style={styles.detailText}>
+              {item.guests} Guest{item.guests > 1 ? 's' : ''}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <MaterialCommunityIcons name="calendar-arrow-right" size={20} color="#00ADB5" />
+            <Text style={styles.detailText}>Check-in: {formatDate(item.checkIn)}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <MaterialCommunityIcons name="calendar-arrow-left" size={20} color="#00ADB5" />
+            <Text style={styles.detailText}>Check-out: {formatDate(item.checkOut)}</Text>
+          </View>
+        </View>
+
+        <Divider style={styles.divider} />
+
+        <View style={styles.bookingFooter}>
+          <View style={styles.priceContainer}>
+            <MaterialCommunityIcons name="receipt" size={20} color="#00ADB5" />
+            <Text style={styles.priceText}>${item.totalPrice?.toFixed(2) || '0.00'}</Text>
+          </View>
+
+          {isUpcoming && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={() => handleCancelBooking(item)}
+              >
+                <MaterialIcons name="cancel" size={18} color="white" />
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {isCompleted && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.bookAgainButton]}
+                onPress={() => showNotification('Book again feature coming soon', 'info')}
+              >
+                <MaterialIcons name="repeat" size={18} color="white" />
+                <Text style={styles.buttonText}>Book Again</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.reviewButton]}
+                onPress={() => showNotification('Review feature coming soon', 'info')}
+              >
+                <MaterialIcons name="rate-review" size={18} color="#00ADB5" />
+                <Text style={[styles.buttonText, { color: '#00ADB5' }]}>Review</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {isCancelled && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.bookAgainButton]}
+                onPress={() => showNotification('Book again feature coming soon', 'info')}
+              >
+                <MaterialIcons name="repeat" size={18} color="white" />
+                <Text style={styles.buttonText}>Book Again</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
       </View>
+    );
+  };
 
-      <Divider style={styles.divider} />
+  const renderRefundItem = ({ item }) => (
+    <View style={styles.refundItem}>
+      <View style={styles.refundRow}>
+        <Text style={styles.refundLabel}>Booking Code:</Text>
+        <Text style={styles.refundValue}>{item.bookingCode}</Text>
+      </View>
+      <View style={styles.refundRow}>
+        <Text style={styles.refundLabel}>Total Price:</Text>
+        <Text style={styles.refundValue}>${item.totalPrice?.toFixed(2) || '0.00'}</Text>
+      </View>
+      <View style={styles.refundRow}>
+        <Text style={styles.refundLabel}>Status:</Text>
+        <Text
+          style={[
+            styles.refundValue,
+            { color: item.status === 'pending' ? '#FFA500' : '#4CAF50' },
+          ]}
+        >
+          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+        </Text>
+      </View>
+    </View>
+  );
 
-      <View style={styles.bookingDetails}>
-        <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="door" size={20} color="#00ADB5" />
-          <Text style={styles.detailText}>Room {item.roomNumber}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="account-group" size={20} color="#00ADB5" />
-          <Text style={styles.detailText}>{item.guests} Guest{item.guests > 1 ? 's' : ''}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="calendar-arrow-right" size={20} color="#00ADB5" />
-          <Text style={styles.detailText}>Check-in: {formatDate(item.checkIn)}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <MaterialCommunityIcons name="calendar-arrow-left" size={20} color="#00ADB5" />
-          <Text style={styles.detailText}>Check-out: {formatDate(item.checkOut)}</Text>
-        </View>
+  const renderRefundSection = () => (
+    <View style={styles.refundContainer}>
+      <View style={styles.refundTabsContainer}>
+        <TouchableOpacity
+          style={[styles.refundTab, refundTab === 0 && styles.activeRefundTab]}
+          onPress={() => setRefundTab(0)}
+        >
+          <Text style={[styles.refundTabText, refundTab === 0 && styles.activeRefundTabText]}>
+            Request Refund
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.refundTab, refundTab === 1 && styles.activeRefundTab]}
+          onPress={() => setRefundTab(1)}
+        >
+          <Text style={[styles.refundTabText, refundTab === 1 && styles.activeRefundTabText]}>
+            Refund History
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <Divider style={styles.divider} />
-
-      <View style={styles.bookingFooter}>
-        <View style={styles.priceContainer}>
-          <MaterialCommunityIcons name="receipt" size={20} color="#00ADB5" />
-          <Text style={styles.priceText}>${item.totalPrice}</Text>
+      {refundTab === 0 && (
+        <View style={styles.refundForm}>
+          <Text style={styles.formTitle}>Enter your booking code to request a refund</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Booking Code"
+            placeholderTextColor="#888"
+            value={refundBookingCode}
+            onChangeText={setRefundBookingCode}
+            editable={!refundLoading}
+          />
+          <TouchableOpacity
+            style={[styles.submitButton, (refundLoading || !refundBookingCode) && styles.disabledButton]}
+            onPress={handleRefundSubmit}
+            disabled={refundLoading || !refundBookingCode}
+          >
+            <MaterialCommunityIcons
+              name={refundLoading ? 'loading' : 'receipt'}
+              size={20}
+              color="#EEEEEE"
+            />
+            <Text style={styles.submitButtonText}>
+              {refundLoading ? 'Submitting...' : 'Submit Refund Request'}
+            </Text>
+          </TouchableOpacity>
         </View>
+      )}
 
-        {item.status === 'upcoming' ? (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={() => handleCancelBooking(item)}
-            >
-              <MaterialIcons name="cancel" size={18} color="white" />
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, styles.modifyButton]}>
-              <MaterialIcons name="edit" size={18} color="#00ADB5" />
-              <Text style={[styles.buttonText, { color: '#00ADB5' }]}>Modify</Text>
-            </TouchableOpacity>
-          </View>
-        ) : item.status === 'completed' ? (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={[styles.actionButton, styles.bookAgainButton]}>
-              <MaterialIcons name="repeat" size={18} color="white" />
-              <Text style={styles.buttonText}>Book Again</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, styles.reviewButton]}>
-              <MaterialIcons name="rate-review" size={18} color="#00ADB5" />
-              <Text style={[styles.buttonText, { color: '#00ADB5' }]}>Review</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-      </View>
+      {refundTab === 1 && (
+        <View style={styles.refundHistory}>
+          <Text style={styles.historyTitle}>Refund History</Text>
+          {filteredRefunds.length === 0 ? (
+            <Text style={styles.emptyText}>
+              No {refundTab === 0 ? 'pending refunds' : 'refunded payments'} found.
+            </Text>
+          ) : (
+            <FlatList
+              data={filteredRefunds}
+              renderItem={renderRefundItem}
+              keyExtractor={(item) => item.bookingCode}
+              contentContainerStyle={styles.refundList}
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 
   const renderAnalytics = () => (
     <View style={styles.analyticsContainer}>
       <View style={styles.timeRangeSelector}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.timeRangeButton, timeRange === 'week' && styles.activeTimeRange]}
           onPress={() => setTimeRange('week')}
         >
-          <Text style={[styles.timeRangeText, timeRange === 'week' && styles.activeTimeRangeText]}>
+          <Text
+            style={[styles.timeRangeText, timeRange === 'week' && styles.activeTimeRangeText]}
+          >
             Week
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.timeRangeButton, timeRange === 'month' && styles.activeTimeRange]}
           onPress={() => setTimeRange('month')}
         >
-          <Text style={[styles.timeRangeText, timeRange === 'month' && styles.activeTimeRangeText]}>
+          <Text
+            style={[styles.timeRangeText, timeRange === 'month' && styles.activeTimeRangeText]}
+          >
             Month
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.timeRangeButton, timeRange === 'year' && styles.activeTimeRange]}
           onPress={() => setTimeRange('year')}
         >
-          <Text style={[styles.timeRangeText, timeRange === 'year' && styles.activeTimeRangeText]}>
+          <Text
+            style={[styles.timeRangeText, timeRange === 'year' && styles.activeTimeRangeText]}
+          >
             Year
           </Text>
         </TouchableOpacity>
@@ -330,6 +635,16 @@ const BookingScreen = () => {
     </View>
   );
 
+  if (!authChecked) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView>
@@ -343,7 +658,9 @@ const BookingScreen = () => {
               style={[styles.tab, activeTab === 0 && styles.activeTab]}
               onPress={() => setActiveTab(0)}
             >
-              <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>All</Text>
+              <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>
+                All
+              </Text>
               <Badge
                 value={bookings.length}
                 status="primary"
@@ -356,9 +673,11 @@ const BookingScreen = () => {
               style={[styles.tab, activeTab === 1 && styles.activeTab]}
               onPress={() => setActiveTab(1)}
             >
-              <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>Upcoming</Text>
+              <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>
+                Upcoming
+              </Text>
               <Badge
-                value={bookings.filter(b => b.status === 'upcoming').length}
+                value={bookings.filter(b => determineBookingStatus(b) === 'upcoming').length}
                 status="primary"
                 containerStyle={styles.badgeContainer}
                 textStyle={styles.badgeText}
@@ -369,9 +688,11 @@ const BookingScreen = () => {
               style={[styles.tab, activeTab === 2 && styles.activeTab]}
               onPress={() => setActiveTab(2)}
             >
-              <Text style={[styles.tabText, activeTab === 2 && styles.activeTabText]}>Completed</Text>
+              <Text style={[styles.tabText, activeTab === 2 && styles.activeTabText]}>
+                Completed
+              </Text>
               <Badge
-                value={bookings.filter(b => b.status === 'completed').length}
+                value={bookings.filter(b => determineBookingStatus(b) === 'completed').length}
                 status="primary"
                 containerStyle={styles.badgeContainer}
                 textStyle={styles.badgeText}
@@ -382,9 +703,11 @@ const BookingScreen = () => {
               style={[styles.tab, activeTab === 3 && styles.activeTab]}
               onPress={() => setActiveTab(3)}
             >
-              <Text style={[styles.tabText, activeTab === 3 && styles.activeTabText]}>Cancelled</Text>
+              <Text style={[styles.tabText, activeTab === 3 && styles.activeTabText]}>
+                Cancelled
+              </Text>
               <Badge
-                value={bookings.filter(b => b.status === 'cancelled').length}
+                value={bookings.filter(b => determineBookingStatus(b) === 'cancelled').length}
                 status="primary"
                 containerStyle={styles.badgeContainer}
                 textStyle={styles.badgeText}
@@ -395,31 +718,60 @@ const BookingScreen = () => {
               style={[styles.tab, activeTab === 4 && styles.activeTab]}
               onPress={() => setActiveTab(4)}
             >
-              <Text style={[styles.tabText, activeTab === 4 && styles.activeTabText]}>Analytics</Text>
-              <MaterialCommunityIcons name="chart-bar" size={20} color={activeTab === 4 ? '#00ADB5' : '#393E46'} />
+              <Text style={[styles.tabText, activeTab === 4 && styles.activeTabText]}>
+                Request Refund
+              </Text>
+              <MaterialCommunityIcons
+                name="receipt"
+                size={20}
+                color={activeTab === 4 ? '#00ADB5' : '#393E46'}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 5 && styles.activeTab]}
+              onPress={() => setActiveTab(5)}
+            >
+              <Text style={[styles.tabText, activeTab === 5 && styles.activeTabText]}>
+                Analytics
+              </Text>
+              <MaterialCommunityIcons
+                name="chart-bar"
+                size={20}
+                color={activeTab === 5 ? '#00ADB5' : '#393E46'}
+              />
             </TouchableOpacity>
           </ScrollView>
         </View>
 
-        {activeTab === 4 ? (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading bookings...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>{error}</Text>
+          </View>
+        ) : activeTab === 4 ? (
+          renderRefundSection()
+        ) : activeTab === 5 ? (
           renderAnalytics()
-        ) : filteredBookings.length === 0 ? (
+        ) : sortedFilteredBookings.length === 0 ? (
           <View style={styles.emptyContainer}>
             <MaterialIcons name="hotel" size={50} color="#393E46" />
             <Text style={styles.emptyText}>No bookings found</Text>
           </View>
         ) : (
           <FlatList
-            data={filteredBookings}
+            data={sortedFilteredBookings}
             renderItem={renderBookingItem}
-            keyExtractor={item => item.id.toString()}
+            keyExtractor={(item) => item.bookingCode}
             scrollEnabled={false}
             contentContainerStyle={styles.bookingList}
           />
         )}
       </ScrollView>
 
-      {/* Cancel Booking Modal */}
       <Modal
         visible={showCancelModal}
         transparent={true}
@@ -435,16 +787,16 @@ const BookingScreen = () => {
             <Text style={styles.modalText}>
               Cancellation fees may apply depending on the hotel's policy.
             </Text>
-            
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.modalButton, styles.cancelModalButton]}
                 onPress={() => setShowCancelModal(false)}
               >
                 <Text style={styles.modalButtonText}>Go Back</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[styles.modalButton, styles.confirmModalButton]}
                 onPress={confirmCancel}
               >
@@ -455,27 +807,19 @@ const BookingScreen = () => {
         </View>
       </Modal>
 
-      {/* Notification */}
       {notification.visible && (
-        <View style={[
-          styles.notification, 
-          notification.type === 'success' ? styles.successNotification : styles.errorNotification
-        ]}>
+        <View
+          style={[
+            styles.notification,
+            notification.type === 'success'
+              ? styles.successNotification
+              : notification.type === 'error'
+              ? styles.errorNotification
+              : styles.infoNotification,
+          ]}
+        >
           <Text style={styles.notificationText}>{notification.message}</Text>
         </View>
-      )}
-
-      {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={new Date()}
-          mode={datePickerMode}
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            // Handle date selection here
-          }}
-        />
       )}
     </View>
   );
@@ -635,11 +979,6 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: '#F44336',
   },
-  modifyButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#00ADB5',
-  },
   bookAgainButton: {
     backgroundColor: '#4CAF50',
   },
@@ -664,6 +1003,16 @@ const styles = StyleSheet.create({
     color: '#EEEEEE',
     fontSize: 18,
     marginTop: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    color: '#EEEEEE',
+    fontSize: 18,
   },
   modalOverlay: {
     flex: 1,
@@ -734,6 +1083,9 @@ const styles = StyleSheet.create({
   errorNotification: {
     backgroundColor: '#F44336',
   },
+  infoNotification: {
+    backgroundColor: '#0288D1',
+  },
   notificationText: {
     color: '#EEEEEE',
     fontSize: 16,
@@ -786,6 +1138,103 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   analyticsSubtitle: {
+    color: '#EEEEEE',
+    fontSize: 14,
+  },
+  // Refund styles
+  refundContainer: {
+    padding: 15,
+  },
+  refundTabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#393E46',
+  },
+  refundTab: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    borderRadius: 20,
+  },
+  activeRefundTab: {
+    backgroundColor: '#393E46',
+  },
+  refundTabText: {
+    color: '#EEEEEE',
+    fontSize: 16,
+  },
+  activeRefundTabText: {
+    color: '#00ADB5',
+    fontWeight: 'bold',
+  },
+  refundForm: {
+    backgroundColor: '#393E46',
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 10,
+  },
+  formTitle: {
+    color: '#EEEEEE',
+    fontSize: 18,
+    marginBottom: 15,
+  },
+  input: {
+    backgroundColor: '#222831',
+    color: '#EEEEEE',
+    padding: 12,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: '#00ADB5',
+    marginBottom: 15,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#00ADB5',
+    padding: 15,
+    borderRadius: 5,
+    justifyContent: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#666',
+  },
+  submitButtonText: {
+    color: '#EEEEEE',
+    fontSize: 16,
+    marginLeft: 10,
+    fontWeight: 'bold',
+  },
+  refundHistory: {
+    marginTop: 10,
+  },
+  historyTitle: {
+    color: '#00ADB5',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  refundList: {
+    paddingBottom: 20,
+  },
+  refundItem: {
+    backgroundColor: '#393E46',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+  },
+  refundRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 5,
+  },
+  refundLabel: {
+    color: '#EEEEEE',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  refundValue: {
     color: '#EEEEEE',
     fontSize: 14,
   },
