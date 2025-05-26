@@ -24,10 +24,10 @@ const ALL_FACILITY_TYPES = 'All Facility Types';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image+Available';
 const BASE_URL =
   Platform.OS === 'android' && !Platform.isEmulator
-    ? 'http://192.168.232.208:2000'
+    ? 'http://192.168.213.208:2000'
     : 'http://localhost:2000';
 
-    
+
 const FilterHotel = ({ navigation }) => {
   const locations = [ALL_LOCATIONS, 'Bahir Dar', 'Gondar', 'Lalibela', 'Axum', 'Debre Markos'];
   const facilityTypes = [ALL_FACILITY_TYPES, 'Hotels', 'Lodges', 'Resorts', 'Guest Houses', 'Restaurants'];
