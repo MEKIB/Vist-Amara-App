@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   Modal,
-  TextInput,
   FlatList,
   Dimensions,
   Platform,
@@ -16,6 +15,7 @@ import { MaterialCommunityIcons, MaterialIcons, FontAwesome } from '@expo/vector
 import { Badge, Divider } from 'react-native-elements';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import AskRefundScreen from './AskRefundScreen'; // Adjust the path based on your file structure
 
 const { width } = Dimensions.get('window');
 
@@ -25,23 +25,23 @@ const determineBookingStatus = (booking) => {
   const now = new Date();
   const checkIn = new Date(booking.checkIn);
   const checkOut = new Date(booking.checkOut);
-  
+
   if (booking.status === 'cancelled') {
     return 'cancelled';
   }
-  
+
   if (checkOut > now && (booking.status === 'confirmed' || booking.status === 'check-in')) {
     return 'upcoming';
   }
-  
+
   if (checkOut <= now && (booking.status === 'checked-out' || booking.status === 'checked-in')) {
     return 'completed';
   }
-  
+
   if (checkIn <= now && checkOut > now) {
     return 'ongoing';
   }
-  
+
   return booking.status;
 };
 
@@ -62,14 +62,10 @@ const BookingScreen = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [refundBookingCode, setRefundBookingCode] = useState('');
-  const [refundLoading, setRefundLoading] = useState(false);
-  const [refunds, setRefunds] = useState([]);
-  const [refundTab, setRefundTab] = useState(0);
 
   const BACKEND_API_URL =
     Platform.OS === 'android' && !Platform.isEmulator
-      ? 'http://192.168.213.185:2000'
+      ? 'http://192.168.170.185:2000'
       : 'http://localhost:2000';
 
   const fetchUserData = async () => {
@@ -139,31 +135,6 @@ const BookingScreen = () => {
     }
   };
 
-  const fetchRefunds = async () => {
-    if (!isLoggedIn) return;
-
-    try {
-      const response = await axios.get(`${BACKEND_API_URL}/api/refunds/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setRefunds(
-        response.data.data.map((refund) => ({
-          ...refund,
-          createdAt: new Date(refund.createdAt || Date.now()),
-          updatedAt: new Date(refund.updatedAt || refund.createdAt || Date.now()),
-        })) || []
-      );
-    } catch (err) {
-      console.error('Error fetching refunds:', err);
-      showNotification(
-        err.response?.data?.message || 'Failed to fetch refunds',
-        'error'
-      );
-    }
-  };
-
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -171,12 +142,6 @@ const BookingScreen = () => {
   useEffect(() => {
     fetchBookings();
   }, [authChecked, isLoggedIn, token]);
-
-  useEffect(() => {
-    if (activeTab === 4 && authChecked && isLoggedIn) {
-      fetchRefunds();
-    }
-  }, [activeTab, authChecked, isLoggedIn]);
 
   const handleCancelBooking = async (booking) => {
     if (!booking.bookingCode) {
@@ -222,48 +187,6 @@ const BookingScreen = () => {
     } finally {
       setShowCancelModal(false);
       setSelectedBooking(null);
-    }
-  };
-
-  const handleRefundSubmit = async () => {
-    if (!isLoggedIn) {
-      showNotification('Please log in to request a refund', 'error');
-      return;
-    }
-
-    if (!refundBookingCode || typeof refundBookingCode !== 'string') {
-      showNotification('Please enter a valid booking code', 'error');
-      return;
-    }
-
-    try {
-      setRefundLoading(true);
-      await axios.post(
-        `${BACKEND_API_URL}/api/askrefunds`,
-        {
-          userId: user.id,
-          bookingCode: refundBookingCode,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      showNotification('Refund request submitted successfully', 'success');
-      setRefundBookingCode('');
-      if (refundTab === 1) {
-        await fetchRefunds();
-      }
-    } catch (err) {
-      console.error('Error processing refund request:', err);
-      showNotification(
-        err.response?.data?.message || 'Failed to process refund request.',
-        'error'
-      );
-    } finally {
-      setRefundLoading(false);
     }
   };
 
@@ -362,7 +285,7 @@ const BookingScreen = () => {
 
   const filteredBookings = bookings.filter((booking) => {
     const status = determineBookingStatus(booking);
-    
+
     if (activeTab === 0) return true;
     if (activeTab === 1) return status === 'upcoming';
     if (activeTab === 2) return status === 'completed';
@@ -370,17 +293,9 @@ const BookingScreen = () => {
     return true;
   });
 
-  const sortedFilteredBookings = [...filteredBookings].sort((a, b) => 
+  const sortedFilteredBookings = [...filteredBookings].sort((a, b) =>
     new Date(b.createdAt) - new Date(a.createdAt)
   );
-
-  const filteredRefunds = refunds
-    .filter((refund) => (refundTab === 0 ? refund.status === 'pending' : refund.status === 'refunded'))
-    .sort((a, b) => {
-      const dateA = new Date(refundTab === 0 ? a.createdAt : a.updatedAt);
-      const dateB = new Date(refundTab === 0 ? b.createdAt : b.updatedAt);
-      return refundTab === 0 ? dateA - dateB : dateB - dateA;
-    });
 
   const renderBookingItem = ({ item }) => {
     const status = determineBookingStatus(item);
@@ -484,99 +399,6 @@ const BookingScreen = () => {
     );
   };
 
-  const renderRefundItem = ({ item }) => (
-    <View style={styles.refundItem}>
-      <View style={styles.refundRow}>
-        <Text style={styles.refundLabel}>Booking Code:</Text>
-        <Text style={styles.refundValue}>{item.bookingCode}</Text>
-      </View>
-      <View style={styles.refundRow}>
-        <Text style={styles.refundLabel}>Total Price:</Text>
-        <Text style={styles.refundValue}>${item.totalPrice?.toFixed(2) || '0.00'}</Text>
-      </View>
-      <View style={styles.refundRow}>
-        <Text style={styles.refundLabel}>Status:</Text>
-        <Text
-          style={[
-            styles.refundValue,
-            { color: item.status === 'pending' ? '#FFA500' : '#4CAF50' },
-          ]}
-        >
-          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-        </Text>
-      </View>
-    </View>
-  );
-
-  const renderRefundSection = () => (
-    <View style={styles.refundContainer}>
-      <View style={styles.refundTabsContainer}>
-        <TouchableOpacity
-          style={[styles.refundTab, refundTab === 0 && styles.activeRefundTab]}
-          onPress={() => setRefundTab(0)}
-        >
-          <Text style={[styles.refundTabText, refundTab === 0 && styles.activeRefundTabText]}>
-            Request Refund
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.refundTab, refundTab === 1 && styles.activeRefundTab]}
-          onPress={() => setRefundTab(1)}
-        >
-          <Text style={[styles.refundTabText, refundTab === 1 && styles.activeRefundTabText]}>
-            Refund History
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {refundTab === 0 && (
-        <View style={styles.refundForm}>
-          <Text style={styles.formTitle}>Enter your booking code to request a refund</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Booking Code"
-            placeholderTextColor="#888"
-            value={refundBookingCode}
-            onChangeText={setRefundBookingCode}
-            editable={!refundLoading}
-          />
-          <TouchableOpacity
-            style={[styles.submitButton, (refundLoading || !refundBookingCode) && styles.disabledButton]}
-            onPress={handleRefundSubmit}
-            disabled={refundLoading || !refundBookingCode}
-          >
-            <MaterialCommunityIcons
-              name={refundLoading ? 'loading' : 'receipt'}
-              size={20}
-              color="#EEEEEE"
-            />
-            <Text style={styles.submitButtonText}>
-              {refundLoading ? 'Submitting...' : 'Submit Refund Request'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {refundTab === 1 && (
-        <View style={styles.refundHistory}>
-          <Text style={styles.historyTitle}>Refund History</Text>
-          {filteredRefunds.length === 0 ? (
-            <Text style={styles.emptyText}>
-              No {refundTab === 0 ? 'pending refunds' : 'refunded payments'} found.
-            </Text>
-          ) : (
-            <FlatList
-              data={filteredRefunds}
-              renderItem={renderRefundItem}
-              keyExtractor={(item) => item.bookingCode}
-              contentContainerStyle={styles.refundList}
-            />
-          )}
-        </View>
-      )}
-    </View>
-  );
-
   const renderAnalytics = () => (
     <View style={styles.analyticsContainer}>
       <View style={styles.timeRangeSelector}>
@@ -677,7 +499,7 @@ const BookingScreen = () => {
                 Upcoming
               </Text>
               <Badge
-                value={bookings.filter(b => determineBookingStatus(b) === 'upcoming').length}
+                value={bookings.filter((b) => determineBookingStatus(b) === 'upcoming').length}
                 status="primary"
                 containerStyle={styles.badgeContainer}
                 textStyle={styles.badgeText}
@@ -692,7 +514,7 @@ const BookingScreen = () => {
                 Completed
               </Text>
               <Badge
-                value={bookings.filter(b => determineBookingStatus(b) === 'completed').length}
+                value={bookings.filter((b) => determineBookingStatus(b) === 'completed').length}
                 status="primary"
                 containerStyle={styles.badgeContainer}
                 textStyle={styles.badgeText}
@@ -707,7 +529,7 @@ const BookingScreen = () => {
                 Cancelled
               </Text>
               <Badge
-                value={bookings.filter(b => determineBookingStatus(b) === 'cancelled').length}
+                value={bookings.filter((b) => determineBookingStatus(b) === 'cancelled').length}
                 status="primary"
                 containerStyle={styles.badgeContainer}
                 textStyle={styles.badgeText}
@@ -753,7 +575,7 @@ const BookingScreen = () => {
             <Text style={styles.emptyText}>{error}</Text>
           </View>
         ) : activeTab === 4 ? (
-          renderRefundSection()
+          <AskRefundScreen />
         ) : activeTab === 5 ? (
           renderAnalytics()
         ) : sortedFilteredBookings.length === 0 ? (
@@ -1138,103 +960,6 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   analyticsSubtitle: {
-    color: '#EEEEEE',
-    fontSize: 14,
-  },
-  // Refund styles
-  refundContainer: {
-    padding: 15,
-  },
-  refundTabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#393E46',
-  },
-  refundTab: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    marginHorizontal: 5,
-    borderRadius: 20,
-  },
-  activeRefundTab: {
-    backgroundColor: '#393E46',
-  },
-  refundTabText: {
-    color: '#EEEEEE',
-    fontSize: 16,
-  },
-  activeRefundTabText: {
-    color: '#00ADB5',
-    fontWeight: 'bold',
-  },
-  refundForm: {
-    backgroundColor: '#393E46',
-    borderRadius: 10,
-    padding: 15,
-    marginTop: 10,
-  },
-  formTitle: {
-    color: '#EEEEEE',
-    fontSize: 18,
-    marginBottom: 15,
-  },
-  input: {
-    backgroundColor: '#222831',
-    color: '#EEEEEE',
-    padding: 12,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: '#00ADB5',
-    marginBottom: 15,
-  },
-  submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#00ADB5',
-    padding: 15,
-    borderRadius: 5,
-    justifyContent: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#666',
-  },
-  submitButtonText: {
-    color: '#EEEEEE',
-    fontSize: 16,
-    marginLeft: 10,
-    fontWeight: 'bold',
-  },
-  refundHistory: {
-    marginTop: 10,
-  },
-  historyTitle: {
-    color: '#00ADB5',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  refundList: {
-    paddingBottom: 20,
-  },
-  refundItem: {
-    backgroundColor: '#393E46',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-  },
-  refundRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 5,
-  },
-  refundLabel: {
-    color: '#EEEEEE',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  refundValue: {
     color: '#EEEEEE',
     fontSize: 14,
   },

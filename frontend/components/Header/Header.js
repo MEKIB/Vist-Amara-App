@@ -35,10 +35,13 @@ const Header = ({ navigation, isLoggedIn, user }) => {
 
         <View style={styles.rightIcon}>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            {isLoggedIn && user?.profileImage ? (
+            {isLoggedIn && user?.passportOrId ? (
               <Image 
-                source={user.profileImage} 
+                source={{ 
+                  uri: `http://192.168.170.185:2000/${user.passportOrId}`
+                }} 
                 style={styles.profileImage} 
+                onError={(e) => console.log('Image loading error:', e.nativeEvent.error)}
               />
             ) : (
               <MaterialCommunityIcons name="account" size={24} color="#fff" />

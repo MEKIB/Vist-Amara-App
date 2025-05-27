@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   Platform,
@@ -19,6 +18,7 @@ const AskRefundScreen = () => {
   const [loading, setLoading] = useState(false);
   const [refunds, setRefunds] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
+  const [historySubTab, setHistorySubTab] = useState('pending'); // New state for sub-tabs
   const [notification, setNotification] = useState({
     visible: false,
     message: '',
@@ -31,7 +31,7 @@ const AskRefundScreen = () => {
 
   const BACKEND_API_URL =
     Platform.OS === 'android' && !Platform.isEmulator
-      ? 'http://192.168.213.185:2000'
+      ? 'http://192.168.170.185:2000'
       : 'http://localhost:2000';
 
   // Check authentication
@@ -155,11 +155,11 @@ const AskRefundScreen = () => {
   };
 
   const filteredRefunds = refunds
-    .filter((refund) => (activeTab === 0 ? refund.status === 'pending' : refund.status === 'refunded'))
+    .filter((refund) => refund.status === historySubTab)
     .sort((a, b) => {
-      const dateA = new Date(activeTab === 0 ? a.createdAt : a.updatedAt || a.createdAt);
-      const dateB = new Date(activeTab === 0 ? b.createdAt : b.updatedAt || b.createdAt);
-      return activeTab === 0 ? dateA - dateB : dateB - dateA; // Oldest first for Pending, Newest first for Refunded
+      const dateA = new Date(historySubTab === 'pending' ? a.createdAt : a.updatedAt || a.createdAt);
+      const dateB = new Date(historySubTab === 'pending' ? b.createdAt : b.updatedAt || b.createdAt);
+      return historySubTab === 'pending' ? dateA - dateB : dateB - dateA; // Oldest first for Pending, Newest first for Refunded
     });
 
   const renderRefundItem = ({ item }) => (
@@ -196,76 +196,92 @@ const AskRefundScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Refund Management</Text>
-        </View>
+      
 
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 0 && styles.activeTab]}
-            onPress={() => setActiveTab(0)}
-          >
-            <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>
-              Request Refund
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 1 && styles.activeTab]}
-            onPress={() => setActiveTab(1)}
-          >
-            <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>
-              Refund History
-            </Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 0 && styles.activeTab]}
+          onPress={() => setActiveTab(0)}
+        >
+          <Text style={[styles.tabText, activeTab === 0 && styles.activeTabText]}>
+            Request Refund
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 1 && styles.activeTab]}
+          onPress={() => setActiveTab(1)}
+        >
+          <Text style={[styles.tabText, activeTab === 1 && styles.activeTabText]}>
+            Refund History
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-        {activeTab === 0 && (
-          <View style={styles.refundForm}>
-            <Text style={styles.formTitle}>Enter your booking code to request a refund</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Booking Code"
-              placeholderTextColor="#888"
-              value={bookingCode}
-              onChangeText={setBookingCode}
-              editable={!loading}
+      {activeTab === 0 && (
+        <View style={styles.refundForm}>
+          <Text style={styles.formTitle}>Enter your booking code to request a refund</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Booking Code"
+            placeholderTextColor="#888"
+            value={bookingCode}
+            onChangeText={setBookingCode}
+            editable={!loading}
+          />
+          <TouchableOpacity
+            style={[styles.submitButton, (loading || !bookingCode) && styles.disabledButton]}
+            onPress={handleSubmit}
+            disabled={loading || !bookingCode}
+          >
+            <MaterialCommunityIcons
+              name={loading ? 'loading' : 'receipt'}
+              size={20}
+              color="#EEEEEE"
             />
+            <Text style={styles.submitButtonText}>
+              {loading ? 'Submitting...' : 'Submit Refund Request'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {activeTab === 1 && (
+        <View style={styles.refundHistory}>
+          <View style={styles.subTabsContainer}>
             <TouchableOpacity
-              style={[styles.submitButton, (loading || !bookingCode) && styles.disabledButton]}
-              onPress={handleSubmit}
-              disabled={loading || !bookingCode}
+              style={[styles.subTab, historySubTab === 'pending' && styles.activeSubTab]}
+              onPress={() => setHistorySubTab('pending')}
             >
-              <MaterialCommunityIcons
-                name={loading ? 'loading' : 'receipt'}
-                size={20}
-                color="#EEEEEE"
-              />
-              <Text style={styles.submitButtonText}>
-                {loading ? 'Submitting...' : 'Submit Refund Request'}
+              <Text style={[styles.subTabText, historySubTab === 'pending' && styles.activeSubTabText]}>
+                Pending
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.subTab, historySubTab === 'refunded' && styles.activeSubTab]}
+              onPress={() => setHistorySubTab('refunded')}
+            >
+              <Text style={[styles.subTabText, historySubTab === 'refunded' && styles.activeSubTabText]}>
+                Refunded
               </Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        {activeTab === 1 && (
-          <View style={styles.refundHistory}>
-            <Text style={styles.historyTitle}>Refund History</Text>
-            {filteredRefunds.length === 0 ? (
-              <Text style={styles.emptyText}>
-                No {activeTab === 0 ? 'pending refunds' : 'refunded payments'} found.
-              </Text>
-            ) : (
-              <FlatList
-                data={filteredRefunds}
-                renderItem={renderRefundItem}
-                keyExtractor={(item) => item.bookingCode}
-                contentContainerStyle={styles.refundList}
-              />
-            )}
-          </View>
-        )}
-      </ScrollView>
+          <Text style={styles.historyTitle}>
+            {historySubTab === 'pending' ? 'Pending Refunds' : 'Refunded Payments'}
+          </Text>
+          {filteredRefunds.length === 0 ? (
+            <Text style={styles.emptyText}>
+              No {historySubTab === 'pending' ? 'pending refunds' : 'refunded payments'} found.
+            </Text>
+          ) : (
+            <FlatList
+              data={filteredRefunds}
+              renderItem={renderRefundItem}
+              keyExtractor={(item) => item.bookingCode}
+              contentContainerStyle={styles.refundList}
+            />
+          )}
+        </View>
+      )}
 
       {notification.visible && (
         <View
@@ -321,6 +337,30 @@ const styles = StyleSheet.create({
     color: '#00ADB5',
     fontWeight: 'bold',
   },
+  subTabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#393E46',
+  },
+  subTab: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginHorizontal: 5,
+    borderRadius: 15,
+  },
+  activeSubTab: {
+    backgroundColor: '#00ADB5',
+  },
+  subTabText: {
+    color: '#EEEEEE',
+    fontSize: 14,
+  },
+  activeSubTabText: {
+    color: '#222831',
+    fontWeight: 'bold',
+  },
   refundForm: {
     padding: 15,
     backgroundColor: '#393E46',
@@ -360,6 +400,7 @@ const styles = StyleSheet.create({
   },
   refundHistory: {
     padding: 15,
+    flex: 1,
   },
   historyTitle: {
     color: '#00ADB5',

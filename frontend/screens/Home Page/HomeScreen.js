@@ -20,6 +20,20 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 
+// Import local images with unique names
+import bahirdarImage1 from '../../assets/homepage/bahirdar.jpg';
+import gonderImage1 from '../../assets/homepage/gonder.jpg';
+import fallbackImage from '../../assets/homepage/gonder1.jpg';
+import gonderImage2 from '../../assets/homepage/gonder2.jpg';
+import lalibelaImage1 from '../../assets/homepage/lalibela.jpg';
+import lalibelaImage2 from '../../assets/homepage/lalibela1.jpg';
+import lalibelaImage3 from '../../assets/homepage/lalibela2.jpg';
+import tanaImage1 from '../../assets/homepage/tana.jpg';
+import tanaImage2 from '../../assets/homepage/tana1.jpg';
+import tisabayImage1 from '../../assets/homepage/tisabay.jpg';
+import tisabayImage2 from '../../assets/homepage/tisabay1.jpg';
+import tisabayImage3 from '../../assets/homepage/tisabay2.jpg';
+
 const { width: viewportWidth } = Dimensions.get('window');
 
 const colors = {
@@ -39,21 +53,69 @@ const backgroundImage =
 const carouselImages = [
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945',
+    src: lalibelaImage1,
     title: 'Lalibela',
-    description: 'Explore the ancient rock-hewn churches of Lalibela',
+    description: 'Explore the ancient rock-hewn churches of Lalibela, a UNESCO World Heritage Site.',
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791',
+    src: tanaImage1,
     title: 'Lake Tana',
-    description: 'Discover the serene beauty of Lake Tana',
+    description: 'Discover the serene beauty of Lake Tana and its historic monasteries.',
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791',
+    src: gonderImage1,
     title: 'Gondar',
-    description: 'Visit the castles of Gondar',
+    description: "Visit the castles of Gondar, known as the 'Camelot of Africa'.",
+  },
+  {
+    id: 4,
+    src: gonderImage2,
+    title: 'Gondar Castles',
+    description: 'Another view of the historic castles in the city of Gondar.',
+  },
+  {
+    id: 5,
+    src: lalibelaImage2,
+    title: 'Lalibela Churches',
+    description: 'More stunning views of Lalibela’s rock-hewn churches.',
+  },
+  {
+    id: 6,
+    src: lalibelaImage3,
+    title: 'Lalibela Heritage',
+    description: 'Explore the spiritual and architectural heritage of Lalibela.',
+  },
+  {
+    id: 7,
+    src: tanaImage2,
+    title: 'Lake Tana Monasteries',
+    description: 'Visit the historic monasteries on the islands of Lake Tana.',
+  },
+  {
+    id: 8,
+    src: tisabayImage1,
+    title: 'Blue Nile Falls',
+    description: 'Witness the majestic beauty of the Blue Nile Falls at Tis Abay.',
+  },
+  {
+    id: 9,
+    src: tisabayImage2,
+    title: 'Tis Abay Falls',
+    description: 'Another view of the stunning Blue Nile Falls.',
+  },
+  {
+    id: 10,
+    src: tisabayImage3,
+    title: 'Tis Abay Landscape',
+    description: 'Explore the natural beauty surrounding Tis Abay.',
+  },
+  {
+    id: 11,
+    src: bahirdarImage1,
+    title: 'Bahir Dar',
+    description: 'Experience the vibrant culture and lakeside charm of Bahir Dar.',
   },
 ];
 
@@ -270,7 +332,9 @@ const lakes = [
     type: 'lake'
   },
   {
-    id: 6,
+    id
+
+: 6,
     name: 'Lake Chomen',
     description: 'Wetland area important for bird conservation',
     image: 'https://images.unsplash.com/photo-1579613832125-5d34a13ffe2a',
@@ -352,7 +416,7 @@ const HomeScreen = ({ navigation }) => {
   const renderCarouselItem = ({ item }) => {
     return (
       <View style={styles.carouselItem}>
-        <Image source={{ uri: item.image }} style={styles.carouselImage} resizeMode="cover" />
+        <Image source={item.src} style={styles.carouselImage} resizeMode="cover" />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.8)']}
           style={styles.carouselGradient}
@@ -472,7 +536,7 @@ const HomeScreen = ({ navigation }) => {
               </View>
               <TouchableOpacity
                 style={[styles.searchButton, { backgroundColor: colors.searchButton }]}
-                onPress={() => navigation.navigate('Search', { query: whereTo })}
+                
               >
                 <MaterialIcons name="search" size={24} color={colors.white} />
               </TouchableOpacity>
@@ -604,12 +668,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 20, // Ensure content isn't cut off at the bottom
+    paddingBottom: 20,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    zIndex: -1, // Ensure overlay doesn't cover content
+    zIndex: -1,
   },
   carouselContainer: {
     height: 350,
@@ -645,13 +709,13 @@ const styles = StyleSheet.create({
   },
   paginationContainer: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 100,
     flexDirection: 'row',
     alignSelf: 'center',
   },
   searchBarContainer: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 110,
     left: 20,
     right: 20,
     flexDirection: 'row',
@@ -663,13 +727,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    height: 50,
+    height: 40,
     marginRight: 10,
     borderRadius: 8,
   },
   searchInput: {
     flex: 1,
-    height: 50,
+    height: 40,
     marginLeft: 10,
     color: colors.white,
   },

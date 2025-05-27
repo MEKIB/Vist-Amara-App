@@ -42,16 +42,20 @@ const ProfileScreen = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
-        <Image 
-          source={isLoggedIn && user?.
-passportOrId ? user.
-passportOrId : defaultProfileImage} 
-          style={styles.profileImage} 
+       <Image 
+          source={
+            isLoggedIn && user?.passportOrId 
+              ? { uri: `http://192.168.170.185:2000/${user.passportOrId}` } 
+              : defaultProfileImage
+          } 
+          style={styles.profileImage}
+          onError={(e) => console.log("Failed to load image:", e.nativeEvent.error)}
+          defaultSource={defaultProfileImage}
         />
         
         {isLoggedIn ? (
           <>
-            <Text style={styles.profileName}>{user?.firstName}</Text>
+            <Text style={styles.profileName}>{user?.firstName}  {user?.middleName} </Text>
             <Text style={styles.profileEmail}>{user?.email}</Text>
           </>
         ) : (

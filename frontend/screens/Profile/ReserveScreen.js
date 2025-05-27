@@ -38,7 +38,7 @@ const ReserveScreen = () => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
-  const BASE_URL = Platform.OS === 'android' && !Platform.isEmulator ? 'http://192.168.213.185:2000' : 'http://localhost:2000';
+  const BASE_URL = Platform.OS === 'android' && !Platform.isEmulator ? 'http://192.168.170.185:2000' : 'http://localhost:2000';
 
   const fetchUserData = async () => {
     try {
@@ -358,7 +358,7 @@ const ReserveScreen = () => {
       <Text style={styles.emptySubtitle}>Save your favorite hotels to see them here</Text>
       <TouchableOpacity
         style={styles.browseButton}
-        onPress={() => navigation.navigate('Hotels')}
+        onPress={() => navigation.navigate('Home')}
       >
         <Text style={styles.browseButtonText}>Browse Hotels</Text>
       </TouchableOpacity>

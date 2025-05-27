@@ -355,25 +355,32 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
         <Text style={styles.currentLanguage}>
           Current Language: {selectedLanguage.flag} {selectedLanguage.name}
         </Text>
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={() => {
-            if (isLoggedIn) {
-              navigation.navigate('Main', { screen: 'Profile' });
-            } else {
-              navigation.navigate('Main', { screen: 'Auth' });
-            }
-          }}
-        >
-          <MaterialIcons
-            name={isLoggedIn ? 'account-circle' : 'login'}
-            size={24}
-            color="#fff"
-          />
-          <Text style={styles.loginButtonText}>
-            {isLoggedIn ? 'My Profile' : 'Login / Sign Up'}
-          </Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+  style={styles.loginButton}
+  onPress={() => {
+    if (isLoggedIn) {
+      navigation.navigate('Main', { screen: 'Profile' });
+    } else {
+      navigation.navigate('Main', { screen: 'Login' });
+    }
+  }}
+>
+  {isLoggedIn && user?.passportOrId ? (
+    <Image
+      source={{ uri: `http://192.168.170.185:2000/${user.passportOrId}` }}
+      style={styles.profileIcon}
+    />
+  ) : (
+    <MaterialIcons
+      name={isLoggedIn ? 'account-circle' : 'login'}
+      size={24}
+      color="#fff"
+    />
+  )}
+  <Text style={styles.loginButtonText}>
+    {isLoggedIn ? 'My Profile' : 'Login / Sign Up'}
+  </Text>
+</TouchableOpacity>
       </View>
     </View>
   );
@@ -440,6 +447,17 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: colors.secondary,
+  },
+    profileIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+
+  loginButtonText: {
+    color: '#fff',
+    marginLeft: 8,
   },
   loginButton: {
     flexDirection: 'row',
