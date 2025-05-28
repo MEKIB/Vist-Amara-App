@@ -1,102 +1,50 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image } from 'react-native';
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Image,
+  Platform,
+  Alert,
+} from "react-native";
+import axios from "axios";
 
-const apiKey = 'AIzaSyAxVrT0sVLTwHaUPMQtTsL8r38ma7oG_Oo';
-
-const systemPrompt = `
-You are Luma, an AI assistant for the Visit Amhara tourism system. Your role is to:
-1. Only answer questions related to tourism in the Amhara region of Ethiopia
-2. Provide information about destinations, hotels, flights, and tourist facilities
-3. Help with bookings and travel planning within this system
-4. Politely decline to answer any questions not related to this tourism system
-
-Response Guidelines:
-- Keep answers concise (1-2 paragraphs max)
-- Always mention if information requires checking current availability
-- For bookings, direct users to the appropriate section of the website
-- For VR/AR features, explain how to access them
-`;
-
-const systemKnowledge = `
-Visit Amhara Tourism System Features:
-- VR/AR previews of destinations
-- Hotel and flight bookings
-- World Heritage Site information
-- Cultural event calendars
-- Tourist facility directory
-- Multi-language support
-
-Key Destinations:
-- Lalibela: Rock-hewn churches (UNESCO site)
-- Gondar: Fasil Ghebbi castles (UNESCO site)
-- Simien Mountains: National Park (UNESCO site)
-- Bahir Dar: Lake Tana monasteries and Blue Nile Falls
-- Debre Damo: Ancient monastery
-- Axum: Historic obelisks (near Amhara region)
-
-Booking Information:
-- Hotels can be booked with credit card or mobile payment
-- Flights available from Addis Ababa to Bahir Dar, Gondar, and Lalibela
-- Tour packages include transportation and guides
-`;
-
-const knowledgeBase = {
-  "how do i book a hotel": "You can book hotels by visiting our 'Hotels and Lodges' section, selecting your preferred hotel, and completing the booking form. We accept major credit cards and mobile payments.",
-  "what are popular destinations": "Top destinations in Amhara include:\n1. Lalibela's rock-hewn churches\n2. Simien Mountains National Park\n3. Lake Tana's monasteries\n4. Blue Nile Falls\n5. Gondar's royal enclave",
-  "how do i get to lalibela": "Options to reach Lalibela:\n1. Flight: Daily flights from Addis Ababa (1hr)\n2. Road: Scenic 2-day drive from Bahir Dar\n3. Tour: Book a guided tour package",
-  "what world heritage sites are there": "Amhara has 3 UNESCO sites:\n1. Rock-Hewn Churches of Lalibela\n2. Simien Mountains National Park\n3. Fasil Ghebbi in Gondar",
-  "what is your name": "I'm Luma, your AI guide for Visit Amhara tourism system!",
-  "help": "I can help with:\n- Destination information\n- Hotel/flight bookings\n- Heritage site details\n- Travel planning\n- VR previews of locations",
-  "how does vr work": "Our VR feature lets you explore destinations in 360°:\n1. Go to any destination page\n2. Click 'VR Preview'\n3. Use mouse or mobile to look around",
-  "what events are happening": "Check our Events calendar for:\n- Timket (Epiphany) in Gondar\n- Meskel celebrations\n- Lalibela's Christmas (Genna)\n- Cultural festivals",
-  "what can you do": "I can help with:\n- Tourism information for Amhara region\n- Hotel and flight bookings\n- Heritage site details\n- Travel planning\n- VR previews of locations\n\nJust ask about anything related to visiting Amhara!",
+// Configurable backend URL based on environment
+const getBackendUrl = () => {
+  if (Platform.OS === "android") {
+    return "http://192.168.54.185:2000/chat"; // Android emulator
+  } else if (Platform.OS === "ios") {
+    return "http://localhost:2000/chat"; // iOS simulator
+  }
+  return "http://192.168.54.185:2000/chat"; // Default for physical device; replace with your host IP
 };
+
+// Fallback IP (replace with your host IP if 10.0.2.2 fails)
+const FALLBACK_IP = "http://192.168.54.185:2000/chat"; // Fixed the typo in IP address (1192 -> 192)
 
 const ChatbotLogic = () => {
   const [messages, setMessages] = useState([
     {
-      role: 'bot',
+      role: "bot",
       text: "Luma: Hello! I'm your Amhara tourism assistant. Ask me about destinations, hotels, or travel planning in the Amhara region of Ethiopia.",
     },
   ]);
   const [isVisible, setIsVisible] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [lastMessageTime, setLastMessageTime] = useState(null);
-  const [inputText, setInputText] = useState('');
   const abortController = useRef(new AbortController());
   const flatListRef = useRef(null);
+  const [inputText, setInputText] = useState("");
 
   const toggleChatbot = () => setIsVisible((prev) => !prev);
-
-  const getFAQResponse = (userMessage) => {
-    const lowerMessage = userMessage.toLowerCase();
-    if (knowledgeBase[lowerMessage]) {
-      return knowledgeBase[lowerMessage];
-    }
-    for (const [key, value] of Object.entries(knowledgeBase)) {
-      if (lowerMessage.includes(key)) {
-        return value;
-      }
-    }
-    return null;
-  };
-
-  const isTourismRelated = (response) => {
-    const tourismKeywords = [
-      'tour', 'travel', 'hotel', 'flight', 'destination',
-      'amhara', 'visit', 'book', 'booking', 'lalibela',
-      'simien', 'heritage', 'site', 'attraction', 'tourism',
-      'guide', 'trip', 'vacation', 'holiday', 'vr', 'ar',
-    ];
-    return tourismKeywords.some((keyword) =>
-      response.toLowerCase().includes(keyword)
-    );
-  };
 
   const sendMessage = async () => {
     const now = Date.now();
     if (lastMessageTime && now - lastMessageTime < 1000) {
-      return; // Rate limiting - 1 second between messages
+      return; // Rate limiting: 1 second between messages
     }
     setLastMessageTime(now);
 
@@ -105,77 +53,107 @@ const ChatbotLogic = () => {
     if (message.length < 2) {
       setMessages((prev) => [
         ...prev,
-        { role: 'bot', text: 'Luma: Please ask a complete question about Amhara tourism.' },
+        {
+          role: "bot",
+          text: "Luma: Please ask a complete question about Amhara tourism.",
+        },
       ]);
       flatListRef.current?.scrollToEnd({ animated: true });
       return;
     }
 
-    setMessages((prev) => [...prev, { role: 'user', text: message }]);
-    setInputText('');
+    // Add user message and a placeholder for the bot's response
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: message },
+      { role: "bot", text: "Luma: ..." },
+    ]);
+    setInputText("");
     setIsTyping(true);
     flatListRef.current?.scrollToEnd({ animated: true });
 
-    const faqResponse = getFAQResponse(message);
-    if (faqResponse) {
-      setTimeout(() => {
-        setMessages((prev) => [...prev, { role: 'bot', text: `Luma: ${faqResponse}` }]);
-        setIsTyping(false);
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 800);
-      return;
-    }
-
     try {
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`;
+      const url = getBackendUrl();
+      console.log("Attempting request to:", url);
 
-      const requestBody = {
-        contents: [{
-          role: 'user',
-          parts: [{ text: `${systemPrompt}\n\n${systemKnowledge}\n\nUser Question: ${message}` }],
-        }],
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 200,
-          topP: 0.9,
-        },
-      };
+      const response = await axios.post(
+        url,
+        { message },
+        {
+          signal: abortController.current.signal,
+          timeout: 15000, // Increased to 15 seconds for slower networks
+        }
+      );
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-        signal: abortController.current.signal,
-      });
+      console.log("Backend Response Data:", response.data);
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status} - ${response.statusText}`);
-      }
+      if (response.data && response.data.reply) {
+        let botReply = response.data.reply;
 
-      const data = await response.json();
-
-      if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        let botReply = data.candidates[0].content.parts[0].text;
-
-        if (!isTourismRelated(botReply)) {
-          botReply = "I'm sorry, I can only assist with questions about the Visit Amhara tourism system.";
+        // Ensure the response is prefixed with "Luma:"
+        if (!botReply.startsWith("Luma:")) {
+          botReply = `Luma: ${botReply}`;
         }
 
-        setMessages((prev) => [...prev, { role: 'bot', text: `Luma: ${botReply}` }]);
-        flatListRef.current?.scrollToEnd({ animated: true });
+        // Replace the placeholder with the actual reply
+        setMessages((prev) => [
+          ...prev.slice(0, -1), // Remove the placeholder
+          { role: "bot", text: botReply },
+        ]);
       } else {
-        throw new Error('Invalid response format from API');
+        throw new Error(
+          "Invalid response format from backend: 'reply' field missing"
+        );
       }
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Chatbot Error:', error);
+      if (error.name !== "AbortError") {
+        console.error("Chatbot Error:", {
+          message: error.message,
+          code: error.code,
+          request: error.request,
+          response: error.response?.data,
+          config: error.config?.url,
+        });
+        // Try fallback IP if initial request fails
+        if (!error.response && error.code === "ECONNREFUSED") {
+          console.log("Trying fallback IP:", FALLBACK_IP);
+          try {
+            const fallbackResponse = await axios.post(
+              FALLBACK_IP,
+              { message },
+              {
+                signal: abortController.current.signal,
+                timeout: 15000,
+              }
+            );
+            if (fallbackResponse.data && fallbackResponse.data.reply) {
+              let botReply = fallbackResponse.data.reply;
+              if (!botReply.startsWith("Luma:")) {
+                botReply = `Luma: ${botReply}`;
+              }
+              setMessages((prev) => [
+                ...prev.slice(0, -1),
+                { role: "bot", text: botReply },
+              ]);
+              return;
+            }
+          } catch (fallbackError) {
+            console.error("Fallback Error:", fallbackError);
+          }
+        }
+        // Display detailed error message
+        const errorMessage = error.response
+          ? `Luma: I'm having trouble connecting to our services. Server responded with: ${
+              error.response.status
+            } - ${JSON.stringify(error.response.data)}. Please try again later.`
+          : `Luma: I'm having trouble connecting to our services. Error: ${
+              error.message
+            } (Code: ${
+              error.code || "unknown"
+            }). Please check your network, ensure the server is running at ${getBackendUrl()}, or contact support.`;
         setMessages((prev) => [
-          ...prev,
-          {
-            role: 'bot',
-            text: "Luma: I'm having trouble connecting to our services. " +
-                  "Please try again later or ask a different question about Amhara tourism.",
-          },
+          ...prev.slice(0, -1), // Remove the placeholder
+          { role: "bot", text: errorMessage },
         ]);
         flatListRef.current?.scrollToEnd({ animated: true });
       }
@@ -186,9 +164,9 @@ const ChatbotLogic = () => {
   };
 
   const renderMessage = ({ item }) => (
-    <View style={item.role === 'user' ? styles.userMessage : styles.botMessage}>
-      {item.role === 'bot' && <Text style={styles.lumaText}>Luma:</Text>}
-      <Text style={styles.messageText}>{item.text.replace('Luma:', '')}</Text>
+    <View style={item.role === "user" ? styles.userMessage : styles.botMessage}>
+      {item.role === "bot" && <Text style={styles.lumaText}>Luma:</Text>}
+      <Text style={styles.messageText}>{item.text.replace("Luma:", "")}</Text>
     </View>
   );
 
@@ -196,7 +174,7 @@ const ChatbotLogic = () => {
     <>
       <TouchableOpacity style={styles.chatbotIcon} onPress={toggleChatbot}>
         <Image
-          source={require('../../assets/chatbot.webp')}
+          source={require("../../assets/chatbot.webp")}
           style={styles.chatbotIconImage}
         />
       </TouchableOpacity>
@@ -217,7 +195,9 @@ const ChatbotLogic = () => {
               keyExtractor={(item, index) => index.toString()}
               style={styles.messageList}
               contentContainerStyle={styles.messageListContent}
-              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+              onContentSizeChange={() =>
+                flatListRef.current?.scrollToEnd({ animated: true })
+              }
             />
             {isTyping && (
               <View style={styles.typingIndicator}>
@@ -239,7 +219,7 @@ const ChatbotLogic = () => {
                 style={styles.abortButton}
                 onPress={() => abortController.current.abort()}
               >
-                <Text style={styles.abortButtonText}>▬</Text>
+                <Text style={styles.abortButtonText}></Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -251,7 +231,7 @@ const ChatbotLogic = () => {
 
 const styles = StyleSheet.create({
   chatbotIcon: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 80,
     right: 20,
     width: 50,
@@ -259,18 +239,18 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   chatbotIconImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   chatbotContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 80,
     right: 20,
     width: 250,
     height: 330,
-    backgroundColor: '#222831',
+    backgroundColor: "#222831",
     borderRadius: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -278,21 +258,21 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   chatbotHeader: {
-    backgroundColor: '#2d7ded',
+    backgroundColor: "#2d7ded",
     padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderTopLeftRadius: 5,
     borderTopRightRadius: 5,
   },
   headerText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   closeButton: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
   },
   chatbotBody: {
@@ -306,62 +286,62 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   userMessage: {
-    backgroundColor: '#143D60',
-    alignSelf: 'flex-end',
+    backgroundColor: "#143D60",
+    alignSelf: "flex-end",
     padding: 8,
     margin: 5,
     borderRadius: 5,
-    maxWidth: '80%',
+    maxWidth: "80%",
   },
   botMessage: {
-    backgroundColor: '#393E46',
-    alignSelf: 'flex-start',
+    backgroundColor: "#393E46",
+    alignSelf: "flex-start",
     padding: 8,
     margin: 5,
     borderRadius: 5,
-    maxWidth: '80%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    maxWidth: "80%",
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   lumaText: {
-    color: '#FFAB5B',
-    fontWeight: 'bold',
+    color: "#FFAB5B",
+    fontWeight: "bold",
   },
   messageText: {
-    color: '#fff',
+    color: "#fff",
   },
   typingIndicator: {
-    backgroundColor: '#393E46',
+    backgroundColor: "#393E46",
     padding: 8,
     margin: 5,
     borderRadius: 5,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
+    alignSelf: "flex-start",
+    flexDirection: "row",
   },
   typingText: {
-    color: '#fff',
-    fontStyle: 'italic',
+    color: "#fff",
+    fontStyle: "italic",
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   input: {
     flex: 1,
     padding: 10,
     borderRadius: 5,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginTop: 5,
     paddingRight: 40,
   },
   abortButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 10,
-    top: '50%',
+    top: "50%",
     transform: [{ translateY: -10 }],
   },
   abortButtonText: {
-    color: '#e94560',
+    color: "#e94560",
     fontSize: 18,
   },
 });
