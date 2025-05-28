@@ -16,56 +16,55 @@ const colors = {
   background: "#EEEEEE",
 };
 
-const destinations = [
+const sites = [
   {
     id: 1,
-    name: "Lalibela",
-    image: require("../../assets/icon.png"),
+    title: "Lalibela",
+    description:
+      "Famous for its rock-hewn monolithic churches, a UNESCO World Heritage Site.",
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945", // Placeholder: Lalibela
     type: "Religious Sites",
   },
   {
     id: 2,
-    name: "Simien Mountains",
-    image: require("../../assets/icon.png"),
-    type: "National Parks",
-  },
-  {
-    id: 3,
-    name: "Blue Nile Falls",
-    image: require("../../assets/icon.png"),
-    type: "Waterfalls",
-  },
-  {
-    id: 4,
-    name: "Gondar",
-    image: require("../../assets/icon.png"),
-    type: "Historical Landmarks",
+    title: "Abune Aregawi Monastery",
+    description:
+      "A historic monastery with stunning views and spiritual significance.",
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945", // Placeholder: Monastery
+    type: "Religious Sites",
   },
 ];
 
-const DestinationsScreen = ({ navigation }) => {
+const ReligiousSitesScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Popular Destinations</Text>
+      <Text style={styles.title}>Religious Sites in Amhara</Text>
 
-      {destinations.map((destination) => (
+      {sites.map((site, index) => (
         <TouchableOpacity
-          key={destination.id}
+          key={index}
           style={styles.card}
           onPress={() =>
-            navigation.navigate("DestinationDetailsScreen", { destination })
+            navigation.navigate("DestinationDetailsScreen", {
+              destination: site,
+            })
           }
         >
-          <Image source={destination.image} style={styles.cardImage} />
+          <Image
+            source={{ uri: site.image }}
+            style={styles.cardImage}
+            resizeMode="cover"
+          />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>{destination.name}</Text>
+            <Text style={styles.cardTitle}>{site.title}</Text>
+            <Text style={styles.cardDescription}>{site.description}</Text>
             <View style={styles.cardFooter}>
               <MaterialCommunityIcons
                 name="map-marker"
                 size={16}
                 color={colors.accent}
               />
-              <Text style={styles.cardType}>{destination.type}</Text>
+              <Text style={styles.cardType}>{site.type}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -106,6 +105,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: 5,
   },
+  cardDescription: {
+    fontSize: 14,
+    color: colors.secondary,
+    marginBottom: 10,
+  },
   cardFooter: {
     flexDirection: "row",
     alignItems: "center",
@@ -117,4 +121,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DestinationsScreen;
+export default ReligiousSitesScreen;

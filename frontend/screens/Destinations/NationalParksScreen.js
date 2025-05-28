@@ -16,56 +16,55 @@ const colors = {
   background: "#EEEEEE",
 };
 
-const destinations = [
+const parks = [
   {
     id: 1,
-    name: "Lalibela",
-    image: require("../../assets/icon.png"),
-    type: "Religious Sites",
+    title: "Simien Mountains National Park",
+    description:
+      "A UNESCO World Heritage Site with dramatic landscapes and wildlife.",
+    image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f", // Placeholder: Simien
+    type: "National Park",
   },
   {
     id: 2,
-    name: "Simien Mountains",
-    image: require("../../assets/icon.png"),
-    type: "National Parks",
-  },
-  {
-    id: 3,
-    name: "Blue Nile Falls",
-    image: require("../../assets/icon.png"),
-    type: "Waterfalls",
-  },
-  {
-    id: 4,
-    name: "Gondar",
-    image: require("../../assets/icon.png"),
-    type: "Historical Landmarks",
+    title: "Abune Yoseph Community Conservation Area",
+    description:
+      "Conservation area with unique biodiversity and trekking opportunities.",
+    image: "https://images.unsplash.com/photo-1551632811-561732d1e306", // Placeholder: Mountain
+    type: "Conservation Area",
   },
 ];
 
-const DestinationsScreen = ({ navigation }) => {
+const NationalParksScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Popular Destinations</Text>
+      <Text style={styles.title}>National Parks in Amhara</Text>
 
-      {destinations.map((destination) => (
+      {parks.map((park, index) => (
         <TouchableOpacity
-          key={destination.id}
+          key={index}
           style={styles.card}
           onPress={() =>
-            navigation.navigate("DestinationDetailsScreen", { destination })
+            navigation.navigate("DestinationDetailsScreen", {
+              destination: park,
+            })
           }
         >
-          <Image source={destination.image} style={styles.cardImage} />
+          <Image
+            source={{ uri: park.image }}
+            style={styles.cardImage}
+            resizeMode="cover"
+          />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>{destination.name}</Text>
+            <Text style={styles.cardTitle}>{park.title}</Text>
+            <Text style={styles.cardDescription}>{park.description}</Text>
             <View style={styles.cardFooter}>
               <MaterialCommunityIcons
                 name="map-marker"
                 size={16}
                 color={colors.accent}
               />
-              <Text style={styles.cardType}>{destination.type}</Text>
+              <Text style={styles.cardType}>{park.type}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -106,6 +105,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: 5,
   },
+  cardDescription: {
+    fontSize: 14,
+    color: colors.secondary,
+    marginBottom: 10,
+  },
   cardFooter: {
     flexDirection: "row",
     alignItems: "center",
@@ -117,4 +121,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DestinationsScreen;
+export default NationalParksScreen;

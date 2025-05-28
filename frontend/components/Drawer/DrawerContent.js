@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   StyleSheet,
@@ -9,60 +9,65 @@ import {
   Modal,
   FlatList,
   ScrollView,
-} from 'react-native';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+} from "react-native";
+import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 
 const colors = {
-  primary: '#222831',
-  secondary: '#393E46',
-  accent: '#00ADB5',
-  background: '#EEEEEE',
+  primary: "#222831",
+  secondary: "#393E46",
+  accent: "#00ADB5",
+  background: "#EEEEEE",
 };
 
 const languages = [
-  { id: 1, name: 'English', code: 'en', flag: '🇬🇧' },
-  { id: 2, name: 'Amharic', code: 'am', flag: '🇪🇹' },
-  { id: 3, name: 'French', code: 'fr', flag: '🇫🇷' },
-  { id: 4, name: 'Arabic', code: 'ar', flag: '🇸🇦' },
-  { id: 5, name: 'Spanish', code: 'es', flag: '🇪🇸' },
+  { id: 1, name: "English", code: "en", flag: "🇬🇧" },
+  { id: 2, name: "Amharic", code: "am", flag: "🇪🇹" },
+  { id: 3, name: "French", code: "fr", flag: "🇫🇷" },
+  { id: 4, name: "Arabic", code: "ar", flag: "🇸🇦" },
+  { id: 5, name: "Spanish", code: "es", flag: "🇪🇸" },
 ];
 
 const destinationCategories = [
-  { id: 1, name: 'Things to Do' },
-  { id: 2, name: 'World Heritage Sites' },
-  { id: 3, name: 'National Parks and Community' },
-  { id: 4, name: 'Lakes, Hot Springs and Water Falls' },
-  { id: 5, name: 'Protected Areas' },
-  { id: 6, name: 'Religious Sites' },
-  { id: 7, name: 'Historical Landmarks' },
+  { id: 1, name: "Things to Do" },
+  { id: 2, name: "World Heritage Sites" },
+  { id: 3, name: "National Parks and Community" },
+  { id: 4, name: "Lakes, Hot Springs, Waterfalls" },
+  { id: 6, name: "Religious Sites" },
+  { id: 7, name: "Historical Landmarks" },
 ];
 
 const touristFacilities = [
-  { id: 1, name: 'Flights' },
-  { id: 2, name: 'Hotels and Lodges' },
-  { id: 3, name: 'Tourist Information Centers' },
-  { id: 4, name: 'Other Service Providers' },
+  { id: 1, name: "Flights" },
+  { id: 2, name: "Hotels and Lodges" },
+  { id: 3, name: "Tourist Information Center" },
+  { id: 4, name: "Other Service Providers" },
 ];
 
 const aboutSections = [
-  { id: 1, name: 'Amhara Region' },
-  { id: 2, name: 'The Bureau' },
-  { id: 3, name: 'Our Management' },
-  { id: 4, name: 'Mandate and Responsibility' },
+  { id: 1, name: "Amhara Region" },
+  { id: 2, name: "The Bureau" },
+  { id: 3, name: "Our Management" },
+  { id: 4, name: "Mandate and Responsibility" },
 ];
 
 const searchData = [
-  { id: 1, name: 'Hotels and Locations', type: 'Category' },
-  { id: 2, name: 'Unison Hotel', type: 'Hotel' },
-  { id: 3, name: 'Lalibela', type: 'Destination' },
-  { id: 4, name: 'Timket Festival', type: 'Event' },
-  { id: 5, name: 'Simien Mountains', type: 'Destination' },
-  { id: 6, name: 'Tour Guides', type: 'Service' },
+  { id: 1, name: "Hotels and Locations", type: "Category" },
+  { id: 2, name: "Unison Hotel", type: "Hotel" },
+  { id: 3, name: "Lalibela", type: "Destination" },
+  { id: 4, name: "Timket Festival", type: "Event" },
+  { id: 5, name: "Simien Mountains", type: "Destination" },
+  { id: 6, name: "Tour Guides", type: "Service" },
 ];
 
-const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser }) => {
+const DrawerContent = ({
+  navigation,
+  isLoggedIn,
+  user,
+  setIsLoggedIn,
+  setUser,
+}) => {
   const [searchVisible, setSearchVisible] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [searchResults, setSearchResults] = React.useState([]);
   const [selectedLanguage, setSelectedLanguage] = React.useState(languages[0]);
   const [showLanguageDropdown, setShowLanguageDropdown] = React.useState(false);
@@ -83,12 +88,12 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
   };
 
   const navigateToResult = (item) => {
-    navigation.navigate('Main', {
-      screen: 'Search',
+    navigation.navigate("Main", {
+      screen: "Search",
       params: { item },
     });
     setSearchVisible(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const toggleLanguageDropdown = () => {
@@ -126,51 +131,51 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
 
   const getIconName = (type) => {
     switch (type) {
-      case 'Hotel':
-        return 'bed';
-      case 'Destination':
-        return 'map-marker';
-      case 'Event':
-        return 'calendar';
-      case 'Service':
-        return 'account-tie';
+      case "Hotel":
+        return "bed";
+      case "Destination":
+        return "map-marker";
+      case "Event":
+        return "calendar";
+      case "Service":
+        return "account-tie";
       default:
-        return 'magnify';
+        return "magnify";
     }
   };
 
   const menuItems = [
     {
-      label: 'Home',
-      icon: 'home',
-      action: () => navigation.navigate('Main', { screen: 'Home' }),
+      label: "Home",
+      icon: "home",
+      action: () => navigation.navigate("Main", { screen: "Home" }),
     },
     {
-      label: 'Destinations',
-      icon: 'map-marker-radius',
+      label: "Destinations",
+      icon: "map-marker-radius",
       action: toggleDestinations,
       isDropdown: true,
     },
     {
-      label: 'Tourist Facilities',
-      icon: 'bed',
+      label: "Tourist Facilities",
+      icon: "bed",
       action: toggleFacilities,
       isDropdown: true,
     },
     {
-      label: 'Events',
-      icon: 'calendar',
-      action: () => navigation.navigate('Main', { screen: 'Events' }),
+      label: "Events",
+      icon: "calendar",
+      action: () => navigation.navigate("Main", { screen: "Events" }),
     },
     {
-      label: 'About',
-      icon: 'information',
+      label: "About",
+      icon: "information",
       action: toggleAbout,
       isDropdown: true,
     },
     {
-      label: 'Language',
-      icon: 'translate',
+      label: "Language",
+      icon: "translate",
       action: toggleLanguageDropdown,
       isDropdown: true,
     },
@@ -222,7 +227,7 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
       <ScrollView>
         <View style={styles.header}>
           <Image
-            source={require('../../assets/logo/logo.png')}
+            source={require("../../assets/logo/logo.png")}
             style={styles.logo}
           />
           <Text style={styles.headerText}>Visit Amhara</Text>
@@ -249,12 +254,12 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
                 {item.isDropdown && (
                   <MaterialIcons
                     name={
-                      (item.label === 'Language' && showLanguageDropdown) ||
-                      (item.label === 'Destinations' && showDestinations) ||
-                      (item.label === 'Tourist Facilities' && showFacilities) ||
-                      (item.label === 'About' && showAbout)
-                        ? 'keyboard-arrow-up'
-                        : 'keyboard-arrow-down'
+                      (item.label === "Language" && showLanguageDropdown) ||
+                      (item.label === "Destinations" && showDestinations) ||
+                      (item.label === "Tourist Facilities" && showFacilities) ||
+                      (item.label === "About" && showAbout)
+                        ? "keyboard-arrow-up"
+                        : "keyboard-arrow-down"
                     }
                     size={24}
                     color="#fff"
@@ -262,7 +267,7 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
                 )}
               </TouchableOpacity>
 
-              {item.label === 'Language' && showLanguageDropdown && (
+              {item.label === "Language" && showLanguageDropdown && (
                 <View style={styles.dropdownList}>
                   {languages.map((lang) => (
                     <TouchableOpacity
@@ -277,18 +282,42 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
                 </View>
               )}
 
-              {item.label === 'Destinations' && showDestinations && (
+              {item.label === "Destinations" && showDestinations && (
                 <View style={styles.dropdownList}>
                   {destinationCategories.map((category) => (
                     <TouchableOpacity
                       key={category.id}
                       style={styles.dropdownItem}
-                      onPress={() =>
-                        navigation.navigate('Main', {
-                          screen: 'Destination',
-                          params: { category: category.name },
-                        })
-                      }
+                      onPress={() => {
+                        if (category.name === "Things to Do") {
+                          navigation.navigate("Main", { screen: "ThingsToDo" });
+                        } else if (category.name === "Historical Landmarks") {
+                          navigation.navigate("Main", {
+                            screen: "HistoricalLandmarks",
+                          });
+                        } else if (
+                          category.name === "Lakes, Hot Springs, Waterfalls"
+                        ) {
+                          navigation.navigate("Main", {
+                            screen: "LakesHotSpringsWaterfalls",
+                          });
+                        } else if (category.name === "World Heritage Sites") {
+                          navigation.navigate("Main", {
+                            screen: "WorldHeritageSites",
+                          });
+                        } else if (
+                          category.name === "National Parks and Community"
+                        ) {
+                          navigation.navigate("Main", {
+                            screen: "NationalParks",
+                          });
+                        } else {
+                          navigation.navigate("Main", {
+                            screen: "Destination",
+                            params: { category: category.name },
+                          });
+                        }
+                      }}
                     >
                       <Text style={styles.dropdownItemText}>
                         {category.name}
@@ -298,22 +327,22 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
                 </View>
               )}
 
-              {item.label === 'Tourist Facilities' && showFacilities && (
+              {item.label === "Tourist Facilities" && showFacilities && (
                 <View style={styles.dropdownList}>
                   {touristFacilities.map((facility) => (
                     <TouchableOpacity
                       key={facility.id}
                       style={styles.dropdownItem}
                       onPress={() =>
-                        navigation.navigate('Main', {
+                        navigation.navigate("Main", {
                           screen:
-                            facility.name === 'Hotels and Lodges'
-                              ? 'FilterHotel'
-                              : 'Facility',
+                            facility.name === "Hotels and Lodges"
+                              ? "FilterHotel"
+                              : "Facility",
                           params: {
-                            [facility.name === 'Hotels and Lodges'
-                              ? 'facilityType'
-                              : 'type']: facility.name,
+                            [facility.name === "Hotels and Lodges"
+                              ? "facilityType"
+                              : "type"]: facility.name,
                           },
                         })
                       }
@@ -326,15 +355,15 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
                 </View>
               )}
 
-              {item.label === 'About' && showAbout && (
+              {item.label === "About" && showAbout && (
                 <View style={styles.dropdownList}>
                   {aboutSections.map((section) => (
                     <TouchableOpacity
                       key={section.id}
                       style={styles.dropdownItem}
                       onPress={() =>
-                        navigation.navigate('Main', {
-                          screen: 'About',
+                        navigation.navigate("Main", {
+                          screen: "About",
                           params: { section: section.name },
                         })
                       }
@@ -359,19 +388,19 @@ const DrawerContent = ({ navigation, isLoggedIn, user, setIsLoggedIn, setUser })
           style={styles.loginButton}
           onPress={() => {
             if (isLoggedIn) {
-              navigation.navigate('Main', { screen: 'Profile' });
+              navigation.navigate("Main", { screen: "Profile" });
             } else {
-              navigation.navigate('Main', { screen: 'Auth' });
+              navigation.navigate("Main", { screen: "Auth" });
             }
           }}
         >
           <MaterialIcons
-            name={isLoggedIn ? 'account-circle' : 'login'}
+            name={isLoggedIn ? "account-circle" : "login"}
             size={24}
             color="#fff"
           />
           <Text style={styles.loginButtonText}>
-            {isLoggedIn ? 'My Profile' : 'Login / Sign Up'}
+            {isLoggedIn ? "My Profile" : "Login / Sign Up"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -386,8 +415,8 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderBottomWidth: 1,
     marginTop: 20,
     borderBottomColor: colors.secondary,
@@ -399,13 +428,13 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   headerText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   smallSearchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.secondary,
     borderRadius: 20,
     paddingVertical: 8,
@@ -415,7 +444,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   smallSearchText: {
-    color: '#fff',
+    color: "#fff",
     marginLeft: 10,
     fontSize: 16,
   },
@@ -424,14 +453,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.secondary,
   },
   menuItemText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
     marginLeft: 20,
     flex: 1,
@@ -442,17 +471,17 @@ const styles = StyleSheet.create({
     borderTopColor: colors.secondary,
   },
   loginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.accent,
     padding: 12,
     borderRadius: 5,
   },
   loginButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 10,
   },
   dropdownList: {
@@ -462,14 +491,14 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.primary,
   },
   dropdownItemText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
     marginLeft: 10,
   },
@@ -479,7 +508,7 @@ const styles = StyleSheet.create({
   currentLanguage: {
     color: colors.accent,
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   searchModal: {
     flex: 1,
@@ -487,13 +516,13 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   searchHeader: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.background,
     borderRadius: 25,
     paddingHorizontal: 15,
@@ -509,9 +538,9 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
@@ -522,7 +551,7 @@ const styles = StyleSheet.create({
   },
   resultName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colors.primary,
   },
   resultType: {

@@ -1,38 +1,53 @@
-import 'react-native-gesture-handler';
-import React, { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import "react-native-gesture-handler";
+import React, { useState } from "react";
+import { StatusBar } from "expo-status-bar";
+import { NavigationContainer } from "@react-navigation/native";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import { createStackNavigator } from "@react-navigation/stack";
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import DrawerContent from './components/Drawer/DrawerContent';
-import HomeScreen from './screens/Home Page/HomeScreen';
-import ProfileScreen from './screens/Profile/ProfileScreen';
-import LoginScreen from './screens/Account/LoginScreen';
-import SignupScreen from './screens/Account/SignUpScreen';
-import ProfileSettingsScreen from './screens/Profile/ProfileSettingsScreen';
-import Header from './components/Header/Header';
-import DestinationScreen from './screens/Destinations/DestinationsScreen';
-import FacilityScreen from './screens/FacilityScreen';
-import AboutScreen from './screens/About/AboutScreen';
-import EventsScreen from './screens/Events/EventsScreen';
-import SearchScreen from './screens/Search/SearchScreen';
-import FilterHotel from './screens/Tourist Facilitie/Hotels and Lodges/FilterHotel';
-import FilteredHotels from './screens/Tourist Facilitie/Hotels and Lodges/FilteredHotels';
-import HotelLodges from './screens/Tourist Facilitie/Hotels and Lodges/HotelLodges';
-import BookingScreen from './screens/Profile/BookingScreen';
-import ReserveScreen from './screens/Profile/ReserveScreen';
-import Footer from './screens/Footer/Footer';
-import ChatbotLogic from './screens/Chatbot/ChatbotLogic';
+import DrawerContent from "./components/Drawer/DrawerContent";
+import HomeScreen from "./screens/Home Page/HomeScreen";
+import ProfileScreen from "./screens/Profile/ProfileScreen";
+import LoginScreen from "./screens/Account/LoginScreen";
+import SignupScreen from "./screens/Account/SignUpScreen";
+import ProfileSettingsScreen from "./screens/Profile/ProfileSettingsScreen";
+import Header from "./components/Header/Header";
+import DestinationScreen from "./screens/Destinations/DestinationsScreen";
+import DestinationDetailsScreen from "./screens/Destinations/DestinationDetailsScreen";
+import DestinationCategoriesScreen from "./screens/Destinations/DestinationCategoriesScreen";
+import ThingsToDoScreen from "./screens/Destinations/ThingsToDoScreen";
+import ReligiousSitesScreen from "./screens/Destinations/ReligiousSitesScreen";
+import HistoricalLandmarksScreen from "./screens/Destinations/HistoricalLandmarksScreen";
+import LakesHotSpringsWaterfallsScreen from "./screens/Destinations/LakesHotSpringsWaterfallsScreen";
+import NationalParksScreen from "./screens/Destinations/NationalParksScreen";
+import WorldHeritageSitesScreen from "./screens/Destinations/WorldHeritageSitesScreen";
+import FacilityScreen from "./screens/FacilityScreen";
+import AboutScreen from "./screens/About/AboutScreen";
+import EventsScreen from "./screens/Events/EventsScreen";
+import SearchScreen from "./screens/Search/SearchScreen";
+import FilterHotel from "./screens/Tourist Facilitie/Hotels and Lodges/FilterHotel";
+import FilteredHotels from "./screens/Tourist Facilitie/Hotels and Lodges/FilteredHotels";
+import HotelLodges from "./screens/Tourist Facilitie/Hotels and Lodges/HotelLodges";
+import BookingScreen from "./screens/Profile/BookingScreen";
+import ReserveScreen from "./screens/Profile/ReserveScreen";
+import Footer from "./screens/Footer/Footer";
+import ChatbotLogic from "./screens/Chatbot/ChatbotLogic";
+import TouristInformationCenterScreen from "./screens/TouristInformationCenterScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
-const ScreenWrapper = ({ Component, navigation, useScrollView = true, ...props }) => {
+const ScreenWrapper = ({
+  Component,
+  navigation,
+  useScrollView = true,
+  ...props
+}) => {
   console.log(`Rendering screen: ${Component.name}`);
   const Content = (
     <View style={styles.container}>
+      <View style={styles.statusBarBackground} />
       <Component {...props} navigation={navigation} />
       <Footer navigation={navigation} />
     </View>
@@ -50,10 +65,14 @@ const ScreenWrapper = ({ Component, navigation, useScrollView = true, ...props }
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-    backgroundColor: '#222831',
+    backgroundColor: "#222831",
   },
   container: {
     flex: 1,
+  },
+  statusBarBackground: {
+    height: StatusBar.currentHeight || 44,
+    backgroundColor: "#222831",
   },
 });
 
@@ -69,10 +88,10 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
             user={user}
           />
         ),
-        cardStyle: { backgroundColor: '#222831' },
+        cardStyle: { backgroundColor: "#222831" },
       }}
     >
-      <Stack.Screen name="Home" options={{ title: 'Visit Amhara' }}>
+      <Stack.Screen name="Home" options={{ title: "Visit Amhara" }}>
         {(props) => (
           <ScreenWrapper
             Component={HomeScreen}
@@ -83,7 +102,7 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
-      <Stack.Screen name="Profile" options={{ title: 'My Profile' }}>
+      <Stack.Screen name="Profile" options={{ title: "My Profile" }}>
         {(props) => (
           <ScreenWrapper
             Component={ProfileScreen}
@@ -96,7 +115,10 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
-      <Stack.Screen name="Login" options={{ headerShown: true, title: 'Login' }}>
+      <Stack.Screen
+        name="Login"
+        options={{ headerShown: true, title: "Login" }}
+      >
         {(props) => (
           <ScreenWrapper
             Component={LoginScreen}
@@ -107,7 +129,10 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
-      <Stack.Screen name="Signup" options={{ headerShown: true, title: 'Sign Up' }}>
+      <Stack.Screen
+        name="Signup"
+        options={{ headerShown: true, title: "Sign Up" }}
+      >
         {(props) => (
           <ScreenWrapper
             Component={SignupScreen}
@@ -118,7 +143,10 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
-      <Stack.Screen name="ProfileSettingsScreen" options={{ title: 'Profile Settings' }}>
+      <Stack.Screen
+        name="ProfileSettingsScreen"
+        options={{ title: "Profile Settings" }}
+      >
         {(props) => (
           <ScreenWrapper
             Component={ProfileSettingsScreen}
@@ -129,7 +157,7 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
-      <Stack.Screen name="BookingScreen" options={{ title: 'My Booking' }}>
+      <Stack.Screen name="BookingScreen" options={{ title: "My Booking" }}>
         {(props) => (
           <ScreenWrapper
             Component={BookingScreen}
@@ -140,7 +168,7 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
-      <Stack.Screen name="ReserveScreen" options={{ title: 'Reservation' }}>
+      <Stack.Screen name="ReserveScreen" options={{ title: "Reservation" }}>
         {(props) => (
           <ScreenWrapper
             Component={ReserveScreen}
@@ -151,44 +179,184 @@ const MainStack = ({ isLoggedIn, user, setIsLoggedIn, setUser }) => {
           />
         )}
       </Stack.Screen>
-      <Stack.Screen name="Destination" options={{ title: 'Destinations' }}>
+      <Stack.Screen
+        name="DestinationScreen"
+        options={{ title: "Destinations" }}
+      >
         {(props) => (
-          <ScreenWrapper Component={DestinationScreen} {...props} useScrollView={false} />
+          <ScreenWrapper
+            Component={DestinationScreen}
+            {...props}
+            useScrollView={false}
+          />
         )}
       </Stack.Screen>
-      <Stack.Screen name="Facility" options={{ title: 'Tourist Facilities' }}>
+      <Stack.Screen
+        name="DestinationCategories"
+        options={{ title: "Destination Categories" }}
+      >
         {(props) => (
-          <ScreenWrapper Component={FacilityScreen} {...props} useScrollView={false} />
+          <ScreenWrapper
+            Component={DestinationCategoriesScreen}
+            {...props}
+            useScrollView={true}
+          />
         )}
       </Stack.Screen>
-      <Stack.Screen name="FilterHotel" options={{ title: 'Hotel Filters' }}>
+      <Stack.Screen
+        name="DestinationDetailsScreen"
+        options={{ title: "Destination Details" }}
+      >
         {(props) => (
-          <ScreenWrapper Component={FilterHotel} {...props} useScrollView={false} />
+          <ScreenWrapper
+            Component={DestinationDetailsScreen}
+            {...props}
+            useScrollView={true}
+          />
         )}
       </Stack.Screen>
-      <Stack.Screen name="FilteredHotels" options={{ title: 'Filtered Hotels' }}>
+      <Stack.Screen name="ThingsToDo" options={{ title: "Things to Do" }}>
         {(props) => (
-          <ScreenWrapper Component={FilteredHotels} {...props} useScrollView={false} />
+          <ScreenWrapper
+            Component={ThingsToDoScreen}
+            {...props}
+            useScrollView={true}
+          />
         )}
       </Stack.Screen>
-      <Stack.Screen name="HotelLodges" options={{ title: 'Hotel Details' }}>
+      <Stack.Screen
+        name="ReligiousSites"
+        options={{ title: "Religious Sites" }}
+      >
         {(props) => (
-          <ScreenWrapper Component={HotelLodges} {...props} useScrollView={true} />
+          <ScreenWrapper
+            Component={ReligiousSitesScreen}
+            {...props}
+            useScrollView={true}
+          />
         )}
       </Stack.Screen>
-      <Stack.Screen name="About" options={{ title: 'About Us' }}>
+      <Stack.Screen
+        name="HistoricalLandmarks"
+        options={{ title: "Historical Landmarks" }}
+      >
         {(props) => (
-          <ScreenWrapper Component={AboutScreen} {...props} useScrollView={true} />
+          <ScreenWrapper
+            Component={HistoricalLandmarksScreen}
+            {...props}
+            useScrollView={true}
+          />
         )}
       </Stack.Screen>
-      <Stack.Screen name="Events" options={{ title: 'Events' }}>
+      <Stack.Screen
+        name="LakesHotSpringsWaterfalls"
+        options={{ title: "Lakes, Hot Springs, Waterfalls" }}
+      >
         {(props) => (
-          <ScreenWrapper Component={EventsScreen} {...props} useScrollView={false} />
+          <ScreenWrapper
+            Component={LakesHotSpringsWaterfallsScreen}
+            {...props}
+            useScrollView={true}
+          />
         )}
       </Stack.Screen>
-      <Stack.Screen name="Search" options={{ title: 'Search Results' }}>
+      <Stack.Screen name="NationalParks" options={{ title: "Protected Areas" }}>
         {(props) => (
-          <ScreenWrapper Component={SearchScreen} {...props} useScrollView={false} />
+          <ScreenWrapper
+            Component={NationalParksScreen}
+            {...props}
+            useScrollView={true}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen
+        name="WorldHeritageSites"
+        options={{ title: "World Heritage Sites" }}
+      >
+        {(props) => (
+          <ScreenWrapper
+            Component={WorldHeritageSitesScreen}
+            {...props}
+            useScrollView={true}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="Facility" options={{ title: "Tourist Facilities" }}>
+        {(props) => (
+          <ScreenWrapper
+            Component={FacilityScreen}
+            {...props}
+            useScrollView={false}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="FilterHotel" options={{ title: "Hotel Filters" }}>
+        {(props) => (
+          <ScreenWrapper
+            Component={FilterHotel}
+            {...props}
+            useScrollView={false}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen
+        name="FilteredHotels"
+        options={{ title: "Filtered Hotels" }}
+      >
+        {(props) => (
+          <ScreenWrapper
+            Component={FilteredHotels}
+            {...props}
+            useScrollView={false}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="HotelLodges" options={{ title: "Hotel Details" }}>
+        {(props) => (
+          <ScreenWrapper
+            Component={HotelLodges}
+            {...props}
+            useScrollView={true}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen
+        name="touristinformationcenter"
+        options={{ title: "Tourist Information Center" }}
+      >
+        {(props) => (
+          <ScreenWrapper
+            Component={TouristInformationCenterScreen}
+            {...props}
+            useScrollView={true}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="About" options={{ title: "About Us" }}>
+        {(props) => (
+          <ScreenWrapper
+            Component={AboutScreen}
+            {...props}
+            useScrollView={true}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="Events" options={{ title: "Events" }}>
+        {(props) => (
+          <ScreenWrapper
+            Component={EventsScreen}
+            {...props}
+            useScrollView={false}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="Search" options={{ title: "Search Results" }}>
+        {(props) => (
+          <ScreenWrapper
+            Component={SearchScreen}
+            {...props}
+            useScrollView={false}
+          />
         )}
       </Stack.Screen>
     </Stack.Navigator>
@@ -202,7 +370,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <NavigationContainer>
-        <StatusBar style="light" backgroundColor="#222831" />
+        <StatusBar style="light" />
         <Drawer.Navigator
           drawerContent={(props) => (
             <DrawerContent
@@ -215,13 +383,13 @@ export default function App() {
           )}
           drawerStyle={{
             width: 300,
-            backgroundColor: '#222831',
+            backgroundColor: "#222831",
           }}
           screenOptions={{
             headerShown: false,
           }}
         >
-          <Drawer.Screen name="Main" options={{ title: 'Visit Amhara' }}>
+          <Drawer.Screen name="Main" options={{ title: "Visit Amhara" }}>
             {(props) => (
               <MainStack
                 {...props}
